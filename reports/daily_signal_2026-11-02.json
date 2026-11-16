@@ -1,0 +1,540 @@
+{
+  "as_of": "2026-11-02",
+  "last_rebalance": "2026-11-02",
+  "next_rebalance": null,
+  "capital": 1500000.0,
+  "gross_target": 0.2160957491570195,
+  "cash_target": 0.7839042508429805,
+  "regime_on": false,
+  "n_target": 29,
+  "n_orders": 29,
+  "buy_value": 287542.0,
+  "sell_value": 0,
+  "fee_est": 147.89000000000001,
+  "targets": [
+    {
+      "code": "000001",
+      "weight": 0.007203191638567319,
+      "price": 11.54,
+      "target_shares": 900,
+      "target_value": 10386.0
+    },
+    {
+      "code": "000063",
+      "weight": 0.007203191638567319,
+      "price": 27.66,
+      "target_shares": 300,
+      "target_value": 8298.0
+    },
+    {
+      "code": "000100",
+      "weight": 0.007203191638567319,
+      "price": 4.38,
+      "target_shares": 2400,
+      "target_value": 10512.0
+    },
+    {
+      "code": "000333",
+      "weight": 0.007203191638567319,
+      "price": 87.66,
+      "target_shares": 100,
+      "target_value": 8766.0
+    },
+    {
+      "code": "000538",
+      "weight": 0.007203191638567319,
+      "price": 54.14,
+      "target_shares": 100,
+      "target_value": 5414.0
+    },
+    {
+      "code": "000778",
+      "weight": 0.007203191638567319,
+      "price": 3.4,
+      "target_shares": 3100,
+      "target_value": 10540.0
+    },
+    {
+      "code": "001227",
+      "weight": 0.007203191638567319,
+      "price": 2.17,
+      "target_shares": 4900,
+      "target_value": 10633.0
+    },
+    {
+      "code": "002340",
+      "weight": 0.007203191638567319,
+      "price": 5.53,
+      "target_shares": 1900,
+      "target_value": 10507.0
+    },
+    {
+      "code": "002415",
+      "weight": 0.007203191638567319,
+      "price": 34.91,
+      "target_shares": 300,
+      "target_value": 10473.0
+    },
+    {
+      "code": "002936",
+      "weight": 0.007203191638567319,
+      "price": 1.8,
+      "target_shares": 6000,
+      "target_value": 10800.0
+    },
+    {
+      "code": "300070",
+      "weight": 0.007203191638567319,
+      "price": 3.24,
+      "target_shares": 3300,
+      "target_value": 10692.0
+    },
+    {
+      "code": "600010",
+      "weight": 0.007203191638567319,
+      "price": 1.99,
+      "target_shares": 5400,
+      "target_value": 10746.0
+    },
+    {
+      "code": "600019",
+      "weight": 0.007203191638567319,
+      "price": 6.13,
+      "target_shares": 1700,
+      "target_value": 10421.0
+    },
+    {
+      "code": "600036",
+      "weight": 0.007203191638567319,
+      "price": 43.18,
+      "target_shares": 200,
+      "target_value": 8636.0
+    },
+    {
+      "code": "600050",
+      "weight": 0.007203191638567319,
+      "price": 4.45,
+      "target_shares": 2400,
+      "target_value": 10680.0
+    },
+    {
+      "code": "600089",
+      "weight": 0.007203191638567319,
+      "price": 17.49,
+      "target_shares": 600,
+      "target_value": 10494.0
+    },
+    {
+      "code": "600406",
+      "weight": 0.007203191638567319,
+      "price": 23.54,
+      "target_shares": 400,
+      "target_value": 9416.0
+    },
+    {
+      "code": "600674",
+      "weight": 0.007203191638567319,
+      "price": 17.6,
+      "target_shares": 600,
+      "target_value": 10560.0
+    },
+    {
+      "code": "600887",
+      "weight": 0.007203191638567319,
+      "price": 30.62,
+      "target_shares": 300,
+      "target_value": 9186.0
+    },
+    {
+      "code": "600900",
+      "weight": 0.007203191638567319,
+      "price": 29.5,
+      "target_shares": 300,
+      "target_value": 8850.0
+    },
+    {
+      "code": "600919",
+      "weight": 0.007203191638567319,
+      "price": 12.72,
+      "target_shares": 800,
+      "target_value": 10176.0
+    },
+    {
+      "code": "601225",
+      "weight": 0.007203191638567319,
+      "price": 27.24,
+      "target_shares": 300,
+      "target_value": 8172.0
+    },
+    {
+      "code": "601318",
+      "weight": 0.007203191638567319,
+      "price": 53.12,
+      "target_shares": 200,
+      "target_value": 10624.0
+    },
+    {
+      "code": "601333",
+      "weight": 0.007203191638567319,
+      "price": 3.09,
+      "target_shares": 3400,
+      "target_value": 10506.0
+    },
+    {
+      "code": "601668",
+      "weight": 0.007203191638567319,
+      "price": 4.65,
+      "target_shares": 2300,
+      "target_value": 10695.0
+    },
+    {
+      "code": "601727",
+      "weight": 0.007203191638567319,
+      "price": 6.09,
+      "target_shares": 1700,
+      "target_value": 10353.0
+    },
+    {
+      "code": "601816",
+      "weight": 0.007203191638567319,
+      "price": 5.22,
+      "target_shares": 2000,
+      "target_value": 10440.0
+    },
+    {
+      "code": "601857",
+      "weight": 0.007203191638567319,
+      "price": 14.02,
+      "target_shares": 700,
+      "target_value": 9814.0
+    },
+    {
+      "code": "601860",
+      "weight": 0.007203191638567319,
+      "price": 2.56,
+      "target_shares": 4200,
+      "target_value": 10752.0
+    }
+  ],
+  "orders": [
+    {
+      "code": "000001",
+      "side": "BUY",
+      "shares": 900,
+      "price": 11.54,
+      "value": 10386.0,
+      "fee_est": 5.1,
+      "cur": 0,
+      "target": 900,
+      "note": "新建"
+    },
+    {
+      "code": "000063",
+      "side": "BUY",
+      "shares": 300,
+      "price": 27.66,
+      "value": 8298.0,
+      "fee_est": 5.08,
+      "cur": 0,
+      "target": 300,
+      "note": "新建"
+    },
+    {
+      "code": "000100",
+      "side": "BUY",
+      "shares": 2400,
+      "price": 4.38,
+      "value": 10512.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 2400,
+      "note": "新建"
+    },
+    {
+      "code": "000333",
+      "side": "BUY",
+      "shares": 100,
+      "price": 87.66,
+      "value": 8766.0,
+      "fee_est": 5.09,
+      "cur": 0,
+      "target": 100,
+      "note": "新建"
+    },
+    {
+      "code": "000538",
+      "side": "BUY",
+      "shares": 100,
+      "price": 54.14,
+      "value": 5414.0,
+      "fee_est": 5.05,
+      "cur": 0,
+      "target": 100,
+      "note": "新建"
+    },
+    {
+      "code": "000778",
+      "side": "BUY",
+      "shares": 3100,
+      "price": 3.4,
+      "value": 10540.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 3100,
+      "note": "新建"
+    },
+    {
+      "code": "001227",
+      "side": "BUY",
+      "shares": 4900,
+      "price": 2.17,
+      "value": 10633.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 4900,
+      "note": "新建"
+    },
+    {
+      "code": "002340",
+      "side": "BUY",
+      "shares": 1900,
+      "price": 5.53,
+      "value": 10507.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 1900,
+      "note": "新建"
+    },
+    {
+      "code": "002415",
+      "side": "BUY",
+      "shares": 300,
+      "price": 34.91,
+      "value": 10473.0,
+      "fee_est": 5.1,
+      "cur": 0,
+      "target": 300,
+      "note": "新建"
+    },
+    {
+      "code": "002936",
+      "side": "BUY",
+      "shares": 6000,
+      "price": 1.8,
+      "value": 10800.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 6000,
+      "note": "新建"
+    },
+    {
+      "code": "300070",
+      "side": "BUY",
+      "shares": 3300,
+      "price": 3.24,
+      "value": 10692.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 3300,
+      "note": "新建"
+    },
+    {
+      "code": "600010",
+      "side": "BUY",
+      "shares": 5400,
+      "price": 1.99,
+      "value": 10746.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 5400,
+      "note": "新建"
+    },
+    {
+      "code": "600019",
+      "side": "BUY",
+      "shares": 1700,
+      "price": 6.13,
+      "value": 10421.0,
+      "fee_est": 5.1,
+      "cur": 0,
+      "target": 1700,
+      "note": "新建"
+    },
+    {
+      "code": "600036",
+      "side": "BUY",
+      "shares": 200,
+      "price": 43.18,
+      "value": 8636.0,
+      "fee_est": 5.09,
+      "cur": 0,
+      "target": 200,
+      "note": "新建"
+    },
+    {
+      "code": "600050",
+      "side": "BUY",
+      "shares": 2400,
+      "price": 4.45,
+      "value": 10680.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 2400,
+      "note": "新建"
+    },
+    {
+      "code": "600089",
+      "side": "BUY",
+      "shares": 600,
+      "price": 17.49,
+      "value": 10494.0,
+      "fee_est": 5.1,
+      "cur": 0,
+      "target": 600,
+      "note": "新建"
+    },
+    {
+      "code": "600406",
+      "side": "BUY",
+      "shares": 400,
+      "price": 23.54,
+      "value": 9416.0,
+      "fee_est": 5.09,
+      "cur": 0,
+      "target": 400,
+      "note": "新建"
+    },
+    {
+      "code": "600674",
+      "side": "BUY",
+      "shares": 600,
+      "price": 17.6,
+      "value": 10560.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 600,
+      "note": "新建"
+    },
+    {
+      "code": "600887",
+      "side": "BUY",
+      "shares": 300,
+      "price": 30.62,
+      "value": 9186.0,
+      "fee_est": 5.09,
+      "cur": 0,
+      "target": 300,
+      "note": "新建"
+    },
+    {
+      "code": "600900",
+      "side": "BUY",
+      "shares": 300,
+      "price": 29.5,
+      "value": 8850.0,
+      "fee_est": 5.09,
+      "cur": 0,
+      "target": 300,
+      "note": "新建"
+    },
+    {
+      "code": "600919",
+      "side": "BUY",
+      "shares": 800,
+      "price": 12.72,
+      "value": 10176.0,
+      "fee_est": 5.1,
+      "cur": 0,
+      "target": 800,
+      "note": "新建"
+    },
+    {
+      "code": "601225",
+      "side": "BUY",
+      "shares": 300,
+      "price": 27.24,
+      "value": 8172.0,
+      "fee_est": 5.08,
+      "cur": 0,
+      "target": 300,
+      "note": "新建"
+    },
+    {
+      "code": "601318",
+      "side": "BUY",
+      "shares": 200,
+      "price": 53.12,
+      "value": 10624.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 200,
+      "note": "新建"
+    },
+    {
+      "code": "601333",
+      "side": "BUY",
+      "shares": 3400,
+      "price": 3.09,
+      "value": 10506.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 3400,
+      "note": "新建"
+    },
+    {
+      "code": "601668",
+      "side": "BUY",
+      "shares": 2300,
+      "price": 4.65,
+      "value": 10695.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 2300,
+      "note": "新建"
+    },
+    {
+      "code": "601727",
+      "side": "BUY",
+      "shares": 1700,
+      "price": 6.09,
+      "value": 10353.0,
+      "fee_est": 5.1,
+      "cur": 0,
+      "target": 1700,
+      "note": "新建"
+    },
+    {
+      "code": "601816",
+      "side": "BUY",
+      "shares": 2000,
+      "price": 5.22,
+      "value": 10440.0,
+      "fee_est": 5.1,
+      "cur": 0,
+      "target": 2000,
+      "note": "新建"
+    },
+    {
+      "code": "601857",
+      "side": "BUY",
+      "shares": 700,
+      "price": 14.02,
+      "value": 9814.0,
+      "fee_est": 5.1,
+      "cur": 0,
+      "target": 700,
+      "note": "新建"
+    },
+    {
+      "code": "601860",
+      "side": "BUY",
+      "shares": 4200,
+      "price": 2.56,
+      "value": 10752.0,
+      "fee_est": 5.11,
+      "cur": 0,
+      "target": 4200,
+      "note": "新建"
+    }
+  ]
+}

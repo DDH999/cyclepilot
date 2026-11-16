@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>QuantPilot · 量化投研控制台</title>
+<style>
+:root{
+  --bg:#0b0e13; --panel:#12161f; --panel2:#171c27; --line:#232a38;
+  --fg:#e8ecf3; --mut:#8b97ab; --acc:#4d8dff; --ok:#26de81; --warn:#feca57; --bad:#ff4b4b;
+  --mono:'JetBrains Mono',Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.6 'Inter','Segoe UI',system-ui,sans-serif;
+     background-image:radial-gradient(circle at 12% 0%,rgba(77,141,255,.13),transparent 42%),
+                      radial-gradient(circle at 88% 4%,rgba(38,222,129,.08),transparent 38%);}
+.wrap{max-width:1560px;margin:0 auto;padding:26px 22px 80px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.brand{display:flex;align-items:center;gap:13px}
+.logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#4d8dff,#26de81);
+      display:grid;place-items:center;font-weight:800;font-size:17px;color:#07101c}
+h1{font-size:21px;font-weight:700;letter-spacing:.3px}
+.sub{color:var(--mut);font-size:12.5px;margin-top:2px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:99px;
+      background:var(--panel);border:1px solid var(--line);font-size:12.5px;color:var(--mut)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mut)}
+.dot.on{background:var(--ok);box-shadow:0 0 9px var(--ok)}
+.dot.off{background:var(--bad);box-shadow:0 0 9px var(--bad)}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(196px,1fr));margin-bottom:20px}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+      border-radius:14px;padding:16px 18px}
+.kpi .lab{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.8px}
+.kpi .val{font:700 27px/1.15 var(--mono);margin:7px 0 3px}
+.kpi .note{color:var(--mut);font-size:11.5px}
+.g-ok{color:var(--ok)} .g-bad{color:var(--bad)} .g-warn{color:var(--warn)} .g-acc{color:var(--acc)}
+.sec{margin:26px 0 12px;display:flex;align-items:center;gap:11px}
+.sec h2{font-size:15px;font-weight:650;letter-spacing:.4px}
+.sec .bar{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.two{grid-template-columns:1.05fr .95fr}
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+th{text-align:right;color:var(--mut);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line);
+   font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+th:first-child,td:first-child{text-align:left}
+td{padding:9px 10px;border-bottom:1px solid rgba(35,42,56,.5);font-family:var(--mono);font-size:12.3px}
+tr:hover td{background:rgba(77,141,255,.06)}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-family:inherit}
+.t-hi{background:rgba(255,75,75,.16);color:#ff8b8b}
+.t-lo{background:rgba(38,222,129,.15);color:#6ff0aa}
+.chk{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid rgba(35,42,56,.6)}
+.chk:last-child{border:0}
+.badge{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:800;flex:0 0 22px}
+.b-ok{background:rgba(38,222,129,.18);color:var(--ok)}
+.b-bad{background:rgba(255,75,75,.18);color:var(--bad)}
+.chk .d{color:var(--mut);font-size:12px;font-family:var(--mono)}
+.verdict{padding:14px 16px;border-radius:11px;margin-top:14px;font-weight:600;
+         display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.v-ok{background:rgba(38,222,129,.11);border:1px solid rgba(38,222,129,.35);color:#7df3b4}
+.v-bad{background:rgba(255,75,75,.1);border:1px solid rgba(255,75,75,.36);color:#ff9d9d}
+.chartgrid{grid-template-columns:repeat(auto-fill,minmax(292px,1fr))}
+.chartbox{background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden;
+          transition:.18s;cursor:zoom-in}
+.chartbox:hover{border-color:rgba(77,141,255,.55);transform:translateY(-2px)}
+.chartbox img{width:100%;display:block;background:#0e1117}
+.chartbox .cap{padding:9px 12px;display:flex;justify-content:space-between;gap:8px;font-size:12.2px}
+.chartbox .cap .c{color:var(--mut);font-size:11px}
+.filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+.fbtn{padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);
+      color:var(--mut);font-size:12px;cursor:pointer}
+.fbtn.act{background:rgba(77,141,255,.16);border-color:var(--acc);color:#a9c8ff}
+input,select,textarea{width:100%;background:#0d1119;border:1px solid var(--line);border-radius:9px;
+   padding:9px 11px;color:var(--fg);font:13px/1.5 inherit;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+label{color:var(--mut);font-size:11.5px;display:block;margin:11px 0 5px;letter-spacing:.3px}
+button{background:linear-gradient(135deg,#4d8dff,#3a72e0);border:0;color:#fff;padding:10px 18px;
+   border-radius:9px;font-weight:650;font-size:13px;cursor:pointer}
+button:hover{filter:brightness(1.1)} button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+pre{background:#0a0d13;border:1px solid var(--line);border-radius:10px;padding:12px;
+    font:11.7px/1.55 var(--mono);color:#9fb2cc;max-height:250px;overflow:auto;white-space:pre-wrap}
+.lightbox{position:fixed;inset:0;background:rgba(4,7,12,.94);display:none;place-items:center;z-index:99;padding:26px}
+.lightbox img{max-width:96vw;max-height:92vh;border-radius:11px}
+.lightbox.on{display:grid}
+#toast{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:9px;z-index:100}
+.toast{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--acc);
+   padding:11px 15px;border-radius:9px;font-size:12.6px;max-width:380px;animation:in .22s}
+.toast.ok{border-left-color:var(--ok)} .toast.bad{border-left-color:var(--bad)}
+@keyframes in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.3);
+   border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">QP</div>
+      <div>
+        <h1>QuantPilot <span style="color:var(--mut);font-weight:400;font-size:14px">量化投研控制台</span></h1>
+        <div class="sub">评估门禁 · 33 图表工厂 · VibeTrading 编排 · 多渠道推送 &nbsp;|&nbsp; 纸盘模式（不接真实资金）</div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="pill"><span id="vibeDot" class="dot"></span><span id="vibeTxt">Vibe 引擎检测中…</span></span>
+      <span class="pill">更新 <span id="genAt" style="font-family:var(--mono);color:var(--fg)">—</span></span>
+    </div>
+  </header>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <div class="sec"><h2>门禁判定</h2><div class="bar"></div></div>
+  <div class="grid two">
+    <div class="card" id="gateCard"><div style="color:var(--mut);font-size:12.5px">加载中…</div></div>
+    <div class="card">
+      <div style="font-weight:650;margin-bottom:4px">为什么是这套门禁</div>
+      <div style="color:var(--mut);font-size:12.6px;line-height:1.75;margin-top:8px">
+        <b style="color:var(--fg)">AUC 0.70 不是所有任务都能到。</b>流动性好的股票日频方向预测，诚实样本外 AUC 只有
+        <span class="g-acc">0.51–0.56</span>；0.70 以上通常意味着数据泄漏。<br/>
+        <b style="color:var(--fg)">所以门槛放在可达任务上：</b>波动率状态、事件风险、截面分组。<br/><br/>
+        通过条件：<br/>
+        · 洗牌标签对照回落到 0.5 附近<br/>
+        · 波动率模型 AUC ≥ 0.70<br/>
+        · PBO（回测过拟合概率）&lt; 0.50<br/>
+        · 方向模型不冒充强信号<br/><br/>
+        <span style="color:var(--warn)">真实资金永不自动开启。</span>通过只代表「允许进入纸盘」。
+      </div>
+    </div>
+  </div>
+
+  <div class="sec"><h2>策略回测 · A股真实规则</h2><div class="bar"></div>
+    <span id="btMeta" style="color:var(--mut);font-size:12.5px"></span></div>
+  <div class="card" style="padding:8px 6px">
+    <table id="btTable"><thead><tr>
+      <th>策略</th><th>年化</th><th>Sharpe</th><th>Sortino</th><th>最大回撤</th>
+      <th>Calmar</th><th>波动</th><th>换手</th><th>Beta</th><th>超额年化</th><th>IR</th>
+    </tr></thead><tbody><tr><td colspan="11" style="color:var(--mut)">加载中…</td></tr></tbody></table>
+  </div>
+  <div class="card" id="costCard" style="margin-top:12px;color:var(--mut);font-size:12.3px"></div>
+
+  <div class="sec"><h2>诚实检验 · 样本外与过拟合</h2><div class="bar"></div>
+    <span id="valMeta" style="color:var(--mut);font-size:12.5px"></span></div>
+  <div class="grid two">
+    <div class="card" id="valCard"></div>
+    <div class="card">
+      <div style="font-weight:650;margin-bottom:6px">这张卡片为什么最重要</div>
+      <div style="color:var(--mut);font-size:12.6px;line-height:1.8;margin-top:6px">
+        <b class="g-acc">PBO</b>：在样本内挑出的最优策略，到样本外排名靠后的概率。&lt;50% 才算能复现。<br/>
+        <b class="g-acc">DSR</b>：对"你试了很多次"做惩罚后的真实显著性。&gt;0.95 才算站得住。<br/>
+        <b class="g-acc">IS→OOS 排名相关 ρ</b>：样本内表现能不能预测样本外。<br/>
+        ρ 接近 0 意味着：<span class="g-warn">"在历史上挑最好的那个"这件事本身没有预测力</span>。<br/><br/>
+        <b class="g-warn">所以看"干净样本外"那一栏，不看全样本最好看的数字。</b><br/>
+        全样本最优是事后挑出来的，它的样本外表现已经不算样本外了。
+      </div>
+    </div>
+  </div>
+  <div class="card" style="padding:8px 6px;margin-top:16px">
+    <table id="valTable"><thead><tr>
+      <th>策略</th><th>IS 年化</th><th>IS Sharpe</th><th>OOS 年化</th><th>OOS Sharpe</th><th>OOS 回撤</th><th>衰减</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="sec"><h2>实时监控</h2><div class="bar"></div>
+    <button class="ghost" onclick="loadMonitor()">刷新</button></div>
+  <div class="card" style="padding:8px 6px">
+    <table id="monTable"><thead><tr>
+      <th>标的</th><th>日期</th><th>收盘</th><th>日涨跌</th><th>20日</th>
+      <th>年化波动</th><th>波动状态</th><th>60日回撤</th>
+    </tr></thead><tbody><tr><td colspan="8" style="color:var(--mut)">加载中…</td></tr></tbody></table>
+  </div>
+
+  <div class="sec"><h2>图表工厂 <span style="color:var(--mut);font-weight:400;font-size:12.5px" id="chartCount"></span></h2>
+    <div class="bar"></div></div>
+  <div class="filters" id="filters"></div>
+  <div class="grid chartgrid" id="charts"></div>
+
+  <div class="sec"><h2>VibeTrading 多智能体研究</h2><div class="bar"></div></div>
+  <div class="grid two">
+    <div class="card">
+      <label>预设 (Swarm Preset)</label>
+      <select id="preset"></select>
+      <div id="presetVars"></div>
+      <div class="row" style="margin-top:15px">
+        <button id="btnResearch" onclick="startResearch()">发起研究</button>
+        <span id="researchState" style="color:var(--mut);font-size:12.5px"></span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <b style="font-size:13px">任务进度与产出</b>
+        <span id="runId" style="color:var(--mut);font-size:11.5px;font-family:var(--mono)"></span>
+      </div>
+      <pre id="researchOut">尚未发起研究。</pre>
+    </div>
+  </div>
+
+  <div class="sec"><h2>推送</h2><div class="bar"></div></div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div id="notifyStatus" style="color:var(--mut);font-size:12.6px">读取通道配置…</div>
+      <div class="row">
+        <button class="ghost" onclick="notifyTest()">测试连通性</button>
+        <button onclick="notifyReport()">推送体检报告</button>
+      </div>
+    </div>
+    <pre id="notifyOut" style="margin-top:12px;display:none"></pre>
+  </div>
+</div>
+
+<div class="lightbox" id="lb" onclick="this.classList.remove('on')"><img id="lbImg" src=""/></div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const fmt = (v,d=4) => (v==null||isNaN(v)) ? '—' : Number(v).toFixed(d);
+let ALLCHARTS = [];
+
+function toast(msg, kind=''){
+  const d=document.createElement('div'); d.className='toast '+kind; d.textContent=msg;
+  $('#toast').appendChild(d); setTimeout(()=>d.remove(), 4200);
+}
+
+async function jget(u){ const r=await fetch(u); if(!r.ok) throw new Error((await r.text()).slice(0,180)); return r.json(); }
+async function jpost(u,b){ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
+  if(!r.ok) throw new Error((await r.text()).slice(0,220)); return r.json(); }
+
+async function loadVibe(){
+  try{
+    const h = await jget('/api/vibe/health');
+    const on = h.vibe_reachable;
+    $('#vibeDot').className = 'dot ' + (on?'on':'off');
+    $('#vibeTxt').textContent = on ? `Vibe 在线 · v${(h.info&&h.info.version)||'?'}` : 'Vibe 离线';
+  }catch(e){ $('#vibeDot').className='dot off'; $('#vibeTxt').textContent='Vibe 离线'; }
+}
+
+async function loadSummary(){
+  try{
+    const s = await jget('/api/summary');
+    $('#genAt').textContent = s.generated_at;
+    const t = s.tasks, vol=t.vol_regime, dir=t.direction_1d, sh=t.shuffled_control;
+    const pbo = (s.strategy.pbo||{}).pbo;
+    const kpis = [
+      {lab:'波动率状态 AUC', val:fmt(vol.auc_mean), cls: vol.auc_mean>=0.70?'g-ok':'g-warn',
+       note:`±${fmt(vol.auc_std)} · 门槛 0.70 · ${vol.n_folds} 折`},
+      {lab:'方向预测 AUC', val:fmt(dir.auc_mean), cls:'g-acc',
+       note:`±${fmt(dir.auc_std)} · 诚实区间 0.51-0.56`},
+      {lab:'洗牌对照 AUC', val:fmt(sh.auc_mean), cls:'g-ok', note:'应≈0.50 · 泄漏自检'},
+      {lab:'PBO 过拟合概率', val: pbo==null?'—':(pbo*100).toFixed(1)+'%',
+       cls: pbo==null?'g-acc':(pbo<0.5?'g-ok':'g-bad'), note:'门槛 <50%'},
+      {lab:'样本 / 特征', val:`${(vol.n/1000).toFixed(1)}k`, cls:'g-acc',
+       note:`${vol.n_feat} 特征 · ${s.n_symbols} 标的`},
+      {lab:'图表', val:s.charts, cls:'g-acc', note:`耗时 ${s.elapsed_sec}s`},
+    ];
+    $('#kpis').innerHTML = kpis.map(k=>`<div class="card kpi">
+      <div class="lab">${k.lab}</div><div class="val ${k.cls}">${k.val}</div>
+      <div class="note">${k.note}</div></div>`).join('');
+  }catch(e){
+    $('#kpis').innerHTML = `<div class="card kpi"><div class="lab">无数据</div>
+      <div class="val g-bad">—</div><div class="note">请先运行 pipeline</div></div>`;
+  }
+}
+
+async function loadGate(){
+  try{
+    const g = await jget('/api/gate');
+    const rows = g.checks.map(c=>`<div class="chk">
+      <div class="badge ${c.pass?'b-ok':'b-bad'}">${c.pass?'✓':'✕'}</div>
+      <div style="flex:1"><div>${c.name}</div><div class="d">${c.detail}</div></div></div>`).join('');
+    const v = g.deployable
+      ? `<div class="verdict v-ok"><span>✓ ${g.verdict}</span><span>${g.passed}/${g.total} 项通过</span></div>`
+      : `<div class="verdict v-bad"><span>✕ ${g.verdict}</span><span>${g.passed}/${g.total} 项通过</span></div>`;
+    $('#gateCard').innerHTML = `<div style="font-weight:650;margin-bottom:6px">门禁检查项</div>
+      ${rows}${v}<div style="color:var(--mut);font-size:11.5px;margin-top:10px">${g.note}</div>`;
+  }catch(e){ $('#gateCard').innerHTML = `<div class="g-bad">门禁数据不可用</div>`; }
+}
+
+async function loadBacktest(){
+  const tb = $('#btTable tbody');
+  try{
+    const d = await jget('/api/backtest');
+    const pct = v => (v==null||isNaN(v)) ? '—' : (v*100).toFixed(1)+'%';
+    const num = v => (v==null||isNaN(v)) ? '—' : Number(v).toFixed(2);
+    $('#btMeta').textContent =
+      `票池 ${d.universe_n} 只 · Top${d.top_n} · 缓冲 ${d.buffer} · VT ${d.vol_target} · ` +
+      `风控层 ${d.regime_overlay?'开':'关'} · 基准 ${d.benchmark} ${pct(d.benchmark_total)}`;
+    tb.innerHTML = d.strategies.map(r=>{
+      const cls = (r.sharpe||0)>=0.9 ? 'g-ok' : (r.sharpe||0)>=0.7 ? 'g-warn' : '';
+      return `<tr>
+        <td>${r.strategy}</td>
+        <td class="${r.cagr>=0?'g-ok':'g-bad'}">${pct(r.cagr)}</td>
+        <td class="${cls}">${num(r.sharpe)}</td>
+        <td>${num(r.sortino)}</td>
+        <td class="g-bad">${pct(r.max_drawdown)}</td>
+        <td>${num(r.calmar)}</td>
+        <td>${pct(r.ann_vol)}</td>
+        <td>${(r.ann_turnover||0).toFixed(0)}%</td>
+        <td>${num(r.beta)}</td>
+        <td class="${r.alpha_ann>=0?'g-ok':'g-bad'}">${pct(r.alpha_ann)}</td>
+        <td>${num(r.information_ratio)}</td></tr>`;
+    }).join('');
+    const c = d.costs||{};
+    $('#costCard').innerHTML = `回测成本假设：佣金 <b class="g-acc">${((c['佣金率']||0)*100).toFixed(3)}%</b>（最低 ${c['最低佣金']||0} 元）· ` +
+      `印花税(卖) <b class="g-acc">${((c['印花税(卖)']||0)*100).toFixed(3)}%</b> · ` +
+      `过户费 ${((c['过户费']||0)*100).toFixed(3)}% · 滑点 <b class="g-acc">${c['滑点bps']||0}bps</b> · ` +
+      `T+1 交收 · 涨跌停禁买禁卖 · 100股手数 &nbsp;|&nbsp; ` +
+      `<span class="g-warn">⚠ 票池为当前指数成分，存在幸存者偏差，绝对收益偏乐观；策略间相对比较有效。</span>`;
+  }catch(e){
+    tb.innerHTML = `<tr><td colspan="11" class="g-bad">未回测（运行 backend/run_strategy.py）</td></tr>`;
+    $('#btMeta').textContent = '';
+  }
+}
+
+async function loadValidation(){
+  try{
+    const v = await jget('/api/validation');
+    const pct = x => (x==null||isNaN(x)) ? '—' : (x*100).toFixed(1)+'%';
+    const num = x => (x==null||isNaN(x)) ? '—' : Number(x).toFixed(2);
+    const pbo = v.pbo.pbo, dsr = v.dsr.dsr, rho = v.is_oos_rank_corr;
+    $('#valMeta').textContent = `样本内截止 ${v.split_date} · ${v.n_strategies} 个策略 · 组合数 ${v.pbo.n_combinations}`;
+    const ok = b => b ? 'b-ok' : 'b-bad';
+    const row = (name, pass, detail) => `<div class="chk">
+      <div class="badge ${ok(pass)}">${pass?'✓':'✕'}</div>
+      <div style="flex:1"><div>${name}</div><div class="d">${detail}</div></div></div>`;
+    $('#valCard').innerHTML =
+      `<div style="font-weight:650;margin-bottom:6px">三重检验</div>` +
+      row(`PBO 过拟合概率 = ${(pbo*100).toFixed(1)}%`, pbo < .5, v.pbo_verdict) +
+      row(`Deflated Sharpe = ${num(dsr)}`, dsr > .95,
+          `对 ${v.dsr.n_trials} 次尝试惩罚后，基准 SR=${num(v.dsr.sr_benchmark)}`) +
+      row(`IS→OOS 排名相关 ρ = ${num(rho)}`, Math.abs(rho) > .5,
+          Math.abs(rho) <= .5 ? '样本内挑优对未来无预测力 → 不要迷信"历史最优"' : '排名较稳定') +
+      `<div class="verdict ${v.clean_oos.sharpe >= .5 ? 'v-ok':'v-bad'}"
+         style="flex-direction:column;align-items:flex-start;gap:6px">
+        <span style="font-size:12px;opacity:.85">干净样本外（用样本内选出的策略，直接看它在样本外的表现）</span>
+        <span>${v.clean_oos.strategy}：Sharpe ${num(v.clean_oos.sharpe)} ·
+              年化 ${pct(v.clean_oos.cagr)} · 回撤 ${pct(v.clean_oos.mdd)}</span>
+        <span style="font-size:11.5px;opacity:.8">全样本看着最好的「${v.best_full_sample}」是事后挑出来的，其样本外数字不算样本外。</span>
+      </div>` +
+      `<div style="margin-top:10px;color:var(--mut);font-size:12.2px">
+        等权 14 策略集成（规则固定，无选择偏差）：Sharpe ${num(v.ensemble.sharpe)} ·
+        年化 ${pct(v.ensemble.cagr)} · 回撤 ${pct(v.ensemble.mdd)} ·
+        <span class="g-acc">干净 OOS Sharpe ${num(v.ensemble.oos_sharpe)} / 年化 ${pct(v.ensemble.oos_cagr)}</span>
+      </div>`;
+    const rows = v.table.sort((a,b)=>(b.is_sharpe||-9)-(a.is_sharpe||-9));
+    $('#valTable tbody').innerHTML = rows.map(r=>{
+      const dec = (r.oos_sharpe!=null && r.is_sharpe!=null) ? r.oos_sharpe - r.is_sharpe : null;
+      const dcls = dec==null?'':(dec>=-0.15?'g-ok':dec>=-0.4?'g-warn':'g-bad');
+      return `<tr><td>${r.strategy}</td>
+        <td>${pct(r.is_cagr)}</td><td>${num(r.is_sharpe)}</td>
+        <td>${pct(r.oos_cagr)}</td><td>${num(r.oos_sharpe)}</td>
+        <td class="g-bad">${pct(r.oos_mdd)}</td>
+        <td class="${dcls}">${dec==null?'—':(dec>0?'+':'')+dec.toFixed(2)}</td></tr>`;
+    }).join('');
+  }catch(e){
+    $('#valCard').innerHTML = `<div class="g-bad">未验证（运行 backend/validate.py）</div>`;
+  }
+}
+
+async function loadMonitor(){
+  const tb = $('#monTable tbody');
+  tb.innerHTML = '<tr><td colspan="8" style="color:var(--mut)">加载中…</td></tr>';
+  try{
+    const m = await jget('/api/monitor');
+    tb.innerHTML = m.rows.map(r=>`<tr>
+      <td>${r.symbol}</td><td style="color:var(--mut)">${r.date}</td>
+      <td>${r.close}</td>
+      <td class="${r.chg_1d>=0?'g-ok':'g-bad'}">${r.chg_1d>0?'+':''}${r.chg_1d}%</td>
+      <td class="${r.chg_20d>=0?'g-ok':'g-bad'}">${r.chg_20d>0?'+':''}${r.chg_20d}%</td>
+      <td>${r.vol20_ann}%</td>
+      <td><span class="tag ${r.vol_state==='高波'?'t-hi':'t-lo'}">${r.vol_state}</span></td>
+      <td class="${r.dd_60<0?'g-bad':'g-ok'}">${r.dd_60}%</td></tr>`).join('');
+  }catch(e){ tb.innerHTML = `<tr><td colspan="8" class="g-bad">${e.message}</td></tr>`; }
+}
+
+async function loadCharts(){
+  try{
+    const c = await jget('/api/charts');
+    ALLCHARTS = c.charts;
+    $('#chartCount').textContent = `共 ${c.count} 张`;
+    const cats = ['全部', ...new Set(ALLCHARTS.map(x=>x.category))];
+    $('#filters').innerHTML = cats.map((k,i)=>
+      `<button class="fbtn ${i===0?'act':''}" data-cat="${k}" onclick="filterCharts(this)">${k}</button>`).join('');
+    renderCharts('全部');
+  }catch(e){ $('#charts').innerHTML = `<div class="card g-bad">图表未生成</div>`; }
+}
+
+function renderCharts(cat){
+  const list = cat==='全部' ? ALLCHARTS : ALLCHARTS.filter(x=>x.category===cat);
+  $('#charts').innerHTML = list.map(x=>`<div class="chartbox" onclick="zoom('${x.url}')">
+      <img loading="lazy" src="${x.url}" alt="${x.title}"/>
+      <div class="cap"><span>${x.code} ${x.title}</span><span class="c">${x.category}</span></div>
+    </div>`).join('');
+}
+function filterCharts(el){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('act'));
+  el.classList.add('act'); renderCharts(el.dataset.cat);
+}
+function zoom(u){ $('#lbImg').src=u; $('#lb').classList.add('on'); }
+
+async function loadPresets(){
+  try{
+    const p = await jget('/api/vibe/presets');
+    const want = ['investment_committee','sector_rotation_team','fundamental_research_team',
+                  'geopolitical_war_room','commodity_research_team','earnings_research_desk',
+                  'value_investing_committee','macro_strategy_forum'];
+    const pick = p.presets.filter(x=>want.includes(x.name));
+    const rest = p.presets.filter(x=>!want.includes(x.name));
+    const opts = [...pick, ...rest].map(x=>
+      `<option value="${x.name}">${x.title} · ${x.agents} agents</option>`).join('');
+    $('#preset').innerHTML = opts;
+    $('#preset').onchange = ()=>renderVars(p.presets);
+    window._presets = p.presets;
+    renderVars(p.presets);
+  }catch(e){ $('#preset').innerHTML = '<option>Vibe 不可用</option>'; }
+}
+
+function renderVars(presets){
+  const name = $('#preset').value;
+  const p = presets.find(x=>x.name===name);
+  if(!p){ $('#presetVars').innerHTML=''; return; }
+  const vars = p.vars || [];
+  $('#presetVars').innerHTML = vars.map(v=>
+    `<label>${v.name}${v.required?' *':''} <span style="color:#5f6b80">— ${v.desc||''}</span></label>
+     <input id="var_${v.name}" placeholder="${v.desc||''}"/>`).join('');
+}
+
+async function startResearch(){
+  const name = $('#preset').value;
+  const p = (window._presets||[]).find(x=>x.name===name);
+  const vars = {};
+  (p&&p.vars||[]).forEach(v=>{ const el=$('#var_'+v.name); if(el&&el.value) vars[v.name]=el.value; });
+  // 后端 presets 字段名可能不同，兜底用原始 variables
+  const raw = (window._presetsRaw||[]).find(x=>x.name===name);
+  $('#btnResearch').disabled = true;
+  $('#researchState').innerHTML = '<span class="spin"></span> 发起中…';
+  try{
+    const r = await jpost('/api/research', {preset_name:name, user_vars:vars});
+    $('#runId').textContent = r.run_id;
+    $('#researchOut').textContent = `已启动 ${r.preset}\nrun_id = ${r.run_id}\n状态 = ${r.status}\nuser_vars = ${JSON.stringify(vars)}\n\n轮询中…`;
+    pollResearch(r.run_id);
+    toast('研究已启动', 'ok');
+  }catch(e){ toast('启动失败: '+e.message,'bad'); $('#researchState').textContent='失败'; }
+  finally{ $('#btnResearch').disabled = false; }
+}
+
+async function pollResearch(rid){
+  let n=0;
+  const tick = async ()=>{
+    n++;
+    try{
+      const s = await jget('/api/research/'+rid);
+      const lines = s.tasks.map(t=>`${t.status==='completed'?'✓':t.status==='in_progress'?'…':'·'} ${t.id.padEnd(16)} ${t.status.padEnd(12)} ${t.chars} chars`).join('\n');
+      $('#researchOut').textContent = `run_id = ${rid}\nstatus = ${s.status}\n\n${lines}`;
+      $('#researchState').textContent = `${s.status} · 第 ${n} 次轮询`;
+      const done = s.tasks.every(t=>['completed','failed','cancelled'].includes(t.status));
+      if(!done && n<200) setTimeout(tick, 12000);
+      else { toast('研究完成','ok'); }
+    }catch(e){ $('#researchState').textContent='轮询失败'; }
+  };
+  tick();
+}
+
+async function loadNotify(){
+  try{
+    const s = await jget('/api/notify/status');
+    const parts = [];
+    parts.push(`试行模式 <b class="${s.dry_run?'g-warn':'g-ok'}">${s.dry_run?'开启（不真发）':'关闭'}</b>`);
+    for(const k of ['email','feishu','wechat']){
+      const c = s[k]||{};
+      parts.push(`${k} <span class="${c.configured?'g-ok':'g-bad'}">${c.configured?'已配置':'未配置'}</span>`);
+    }
+    $('#notifyStatus').innerHTML = parts.join(' &nbsp;·&nbsp; ');
+  }catch(e){ $('#notifyStatus').textContent='读取失败'; }
+}
+
+async function notifyTest(){
+  try{ const r = await jpost('/api/notify/test',{}); showNotify(r); toast('推送测试完成','ok'); }
+  catch(e){ toast('失败: '+e.message,'bad'); }
+}
+async function notifyReport(){
+  try{ const r = await jpost('/api/notify/report',{}); showNotify(r); toast('报告已推送','ok'); }
+  catch(e){ toast('失败: '+e.message,'bad'); }
+}
+function showNotify(r){
+  const el = $('#notifyOut'); el.style.display='block';
+  el.textContent = JSON.stringify(r,null,2);
+}
+
+(async function init(){
+  await loadVibe(); await loadSummary(); await loadGate(); await loadBacktest();
+  await loadValidation();
+  await loadMonitor(); await loadCharts(); await loadPresets(); await loadNotify();
+  setInterval(loadMonitor, 60000);
+})();
+</script>
+</body>
+</html>

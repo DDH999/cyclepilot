@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuantPilot · 量化策略体检与监控</title>
+<style>
+  :root{
+    --bg:#0e1117; --panel:#161b22; --line:#2a2f3a; --fg:#e6e6e6;
+    --dim:#8b949e; --accent:#2e86de; --ok:#26de81; --warn:#feca57;
+    --bad:#ff4b4b; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+       font-size:14px;line-height:1.7}
+  header{padding:18px 28px 0;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding-bottom:12px}
+  .brand h1{margin:0;font-size:19px;letter-spacing:.5px}
+  .brand .sub{color:var(--dim);font-size:12.5px}
+  .tabs{display:flex;gap:4px}
+  .tabs button{background:transparent;border:0;border-bottom:2px solid transparent;
+               color:var(--dim);padding:9px 20px;font-size:14px;cursor:pointer;
+               font-family:inherit;font-weight:500}
+  .tabs button.on{color:var(--fg);border-bottom-color:var(--accent)}
+  main{max-width:1180px;margin:0 auto;padding:24px 28px 60px}
+  .card{background:var(--panel);border:1px solid var(--line);
+        border-radius:var(--radius);padding:20px;margin-bottom:18px}
+  .card h2{margin:0 0 14px;font-size:15px;font-weight:600}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .filebox{border:1.5px dashed var(--line);border-radius:8px;padding:16px;
+           text-align:center;cursor:pointer;transition:.15s;position:relative}
+  .filebox:hover{border-color:var(--accent);background:#11161d}
+  .filebox.filled{border-style:solid;border-color:var(--ok)}
+  .filebox input[type=file]{display:none}
+  .filebox .t{font-size:13px}
+  .filebox .d{font-size:12px;color:var(--dim);margin-top:4px}
+  .filebox .n{font-size:12.5px;color:var(--ok);margin-top:6px;
+              word-break:break-all;display:none}
+  .filebox.filled .n{display:block}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px}
+  button.btn{background:var(--accent);color:#fff;border:0;border-radius:7px;
+         padding:11px 26px;font-size:14px;cursor:pointer;font-weight:600;
+         font-family:inherit}
+  button.btn:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--dim);
+               font-weight:400;padding:7px 16px;font-family:inherit;cursor:pointer}
+  label.chk{display:flex;align-items:center;gap:7px;color:var(--dim);
+            font-size:13px;cursor:pointer}
+  #status,#m-status{margin-top:14px;font-size:13px;min-height:22px}
+  .ok{color:var(--ok)} .err{color:var(--bad)} .warn{color:var(--warn)}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:860px){.kpi{grid-template-columns:repeat(2,1fr)}}
+  .kpi .box{background:#11161d;border:1px solid var(--line);border-radius:8px;padding:14px}
+  .kpi .box .l{font-size:12px;color:var(--dim)}
+  .kpi .box .v{font-size:24px;font-weight:700;margin-top:4px}
+  .grade-A{color:var(--ok)} .grade-B{color:#4ea1ff}
+  .grade-C{color:var(--warn)} .grade-D,.grade-REJECTED{color:var(--bad)}
+  .verdict-PASS{color:var(--ok)} .verdict-WARNING{color:var(--warn)}
+  .verdict-FAIL,.verdict-REJECTED{color:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-weight:500;font-size:12.5px}
+  td.num{font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;padding:1px 9px;border-radius:20px;font-size:11.5px}
+  .tag.PASS{background:rgba(38,222,129,.14);color:var(--ok)}
+  .tag.WARN{background:rgba(254,202,87,.14);color:var(--warn)}
+  .tag.NA{background:rgba(139,148,158,.14);color:var(--dim)}
+  .tag.FAIL,.tag.REJECT{background:rgba(255,75,75,.14);color:var(--bad)}
+  .diag p{margin:0 0 12px}
+  .diag .lab{color:var(--accent);font-weight:600}
+  .note{color:var(--dim);font-size:12.5px;margin-top:8px}
+  .badge{font-size:11.5px;padding:2px 9px;border-radius:20px;
+         background:rgba(46,134,222,.16);color:#4ea1ff}
+  .badge.deg{background:rgba(254,202,87,.16);color:var(--warn)}
+  canvas{display:block;margin:0 auto;max-width:100%}
+  .chg{list-style:none;padding:0;margin:0}
+  .chg li{padding:8px 12px;border-left:3px solid var(--line);margin-bottom:8px;
+          background:#11161d;border-radius:0 6px 6px 0;font-size:13px}
+  .chg li.high{border-left-color:var(--bad)}
+  .chg li.mid{border-left-color:var(--warn)}
+  .chg li.low{border-left-color:var(--dim)}
+  .empty{color:var(--dim);text-align:center;padding:26px;font-size:13px}
+  input[type=number]{font-family:inherit}
+  footer{color:var(--dim);font-size:12px;text-align:center;padding:24px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>QuantPilot</h1>
+    <span class="sub">量化策略真实性与风险体检 · 不看收益，只看可信度</span>
+  </div>
+  <div class="tabs">
+    <button id="tab-checkup" class="on">策略体检</button>
+    <button id="tab-daily">每日监控</button>
+    <button id="tab-risk">风控仪表盘</button>
+    <button id="tab-portfolio">持仓定投</button>
+    <button id="tab-code">代码体检</button>
+    <button id="tab-market">市场与基本面</button>
+    <button id="tab-pos">仓位</button>
+  </div>
+</header>
+
+<main>
+<!-- ══════════════ 视图一：策略体检 ══════════════ -->
+<div id="view-checkup">
+  <div class="card">
+    <h2>① 上传材料</h2>
+    <div class="grid">
+      <div class="filebox" id="box-code">
+        <input type="file" id="f-code" accept=".py,.txt,.md,.js">
+        <div class="t">策略代码文件</div>
+        <div class="d">.py / .txt — 用于检测未来函数；可选</div>
+        <div class="n" id="n-code"></div>
+      </div>
+      <div class="filebox" id="box-ret">
+        <input type="file" id="f-ret" accept=".csv,.txt">
+        <div class="t">收益序列 CSV <span class="err">*必填</span></div>
+        <div class="d">列名 date,ret 或 date,nav（至少 30 行）</div>
+        <div class="n" id="n-ret"></div>
+      </div>
+      <div class="filebox" id="box-w">
+        <input type="file" id="f-w" accept=".csv,.txt">
+        <div class="t">持仓权重 CSV</div>
+        <div class="d">宽表：行=日期，列=股票代码；可选</div>
+        <div class="n" id="n-w"></div>
+      </div>
+      <div class="filebox" id="box-b">
+        <input type="file" id="f-b" accept=".csv,.txt">
+        <div class="t">基准序列 CSV</div>
+        <div class="d">列名 date,ret；用于 beta 与 R²；可选</div>
+        <div class="n" id="n-b"></div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn" id="go" disabled>开始体检</button>
+      <button class="ghost" id="demo">载入示例数据</button>
+      <label class="chk"><input type="checkbox" id="use-llm"> 启用大模型诊断（需 QP_LLM_KEY）</label>
+    </div>
+    <div id="status"></div>
+    <div class="note">未启用大模型时，诊断由本地规则模板生成，结果同样完整可用。</div>
+  </div>
+
+  <div id="result">
+    <div class="card">
+      <h2>② 体检结论</h2>
+      <div class="kpi">
+        <div class="box"><div class="l">结论</div><div class="v" id="k-verdict">—</div></div>
+        <div class="box"><div class="l">评级</div><div class="v" id="k-grade">—</div></div>
+        <div class="box"><div class="l">加权得分</div><div class="v" id="k-score">—</div></div>
+        <div class="box"><div class="l">样本天数</div><div class="v" id="k-days">—</div></div>
+      </div>
+      <div id="k-summary" class="note" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card">
+      <h2>③ 六维雷达</h2>
+      <canvas id="radar" width="480" height="420"></canvas>
+      <div class="note" style="text-align:center">灰色轴表示该项豁免（N/A），不计入评分</div>
+    </div>
+
+    <div class="card">
+      <h2>④ 维度明细</h2>
+      <table id="t-dims">
+        <thead><tr><th>维度</th><th>权重</th><th>得分</th><th>状态</th><th>说明</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card diag">
+      <h2>⑤ 风险诊断 <span id="d-badge" class="badge"></span></h2>
+      <p><span class="lab">综合定性　</span><span id="d-summary">—</span></p>
+      <p><span class="lab">核心致命伤</span><span id="d-fatal">—</span></p>
+      <p><span class="lab">整改建议　</span><span id="d-advice">—</span></p>
+    </div>
+
+    <div class="card" id="c-issues" style="display:none">
+      <h2>⑥ 问题清单</h2>
+      <table id="t-issues">
+        <thead><tr><th>维度</th><th>严重度</th><th>整改方向</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card" id="c-find" style="display:none">
+      <h2>⑦ 代码检测命中</h2>
+      <table id="t-find">
+        <thead><tr><th>行</th><th>规则</th><th>问题</th><th>改法</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card" id="c-warn" style="display:none">
+      <h2>⑧ 提示</h2>
+      <ul id="u-warn" style="margin:0;padding-left:20px;color:var(--warn)"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ 视图二：每日监控 ══════════════ -->
+<div id="view-daily" style="display:none">
+  <div class="card">
+    <h2>① 监控概览</h2>
+    <div class="kpi">
+      <div class="box"><div class="l">结论</div><div class="v" id="m-verdict">—</div></div>
+      <div class="box"><div class="l">评级</div><div class="v" id="m-grade">—</div></div>
+      <div class="box"><div class="l">加权得分</div><div class="v" id="m-score">—</div></div>
+      <div class="box"><div class="l">纸盘净值</div><div class="v" id="m-nav">—</div></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="refresh">立即更新</button>
+      <span class="note" id="m-meta" style="margin:0"></span>
+    </div>
+    <div id="m-status"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 纸盘净值曲线</h2>
+    <canvas id="navchart" width="1000" height="300"></canvas>
+    <div class="note" style="text-align:center" id="nav-meta"></div>
+  </div>
+
+  <div class="card">
+    <h2>③ 本次变化</h2>
+    <ul class="chg" id="m-changes"></ul>
+  </div>
+
+  <div class="card diag">
+    <h2>④ 今日诊断 <span id="m-badge" class="badge"></span></h2>
+    <p><span class="lab">综合定性　</span><span id="m-dsummary">—</span></p>
+    <p><span class="lab">核心致命伤</span><span id="m-dfatal">—</span></p>
+    <p><span class="lab">整改建议　</span><span id="m-dadvice">—</span></p>
+  </div>
+
+  <div class="card">
+    <h2>⑤ 历史记录</h2>
+    <table id="t-history">
+      <thead><tr><th>日期</th><th>结论</th><th>评级</th><th>得分</th><th>净值</th><th>变化</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note">若这里是空的，说明还没有日更记录：运行 <code>python backend/daily_job.py --once</code></div>
+  </div>
+</div>
+
+<!-- ══════════════ 视图三：风控仪表盘 ══════════════ -->
+<div id="view-risk" style="display:none">
+  <div class="card">
+    <h2>① 风控决策</h2>
+    <div style="text-align:center;padding:10px 0 18px">
+      <div id="r-action" style="font-size:40px;font-weight:800;letter-spacing:2px">—</div>
+      <div id="r-scale" class="note" style="margin-top:6px"></div>
+    </div>
+    <div class="kpi">
+      <div class="box"><div class="l">当前回撤</div><div class="v" id="r-dd">—</div></div>
+      <div class="box"><div class="l">拥挤度</div><div class="v" id="r-crowd">—</div></div>
+      <div class="box"><div class="l">数据质量</div><div class="v" id="r-data">—</div></div>
+      <div class="box"><div class="l">脆弱度</div><div class="v" id="r-frag">—</div></div>
+    </div>
+    <div class="row">
+      <label class="chk">资金
+        <input id="r-cap" type="number" value="100000" step="10000"
+               style="width:110px;background:#11161d;border:1px solid var(--line);
+                      color:var(--fg);padding:5px 8px;border-radius:6px">
+      </label>
+      <label class="chk">年换手
+        <input id="r-turn" type="number" value="12" step="1"
+               style="width:70px;background:#11161d;border:1px solid var(--line);
+                      color:var(--fg);padding:5px 8px;border-radius:6px">
+      </label>
+      <button class="btn" id="r-refresh">重新评估</button>
+      <span class="note" id="r-meta" style="margin:0"></span>
+    </div>
+    <div id="r-status"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 触发原因</h2>
+    <ul class="chg" id="r-reasons"></ul>
+  </div>
+
+  <div class="card">
+    <h2>③ 四道闸门</h2>
+    <table id="t-gates">
+      <thead><tr><th>闸门</th><th>当前值</th><th>阈值</th><th>状态</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>④ 成本与容量</h2>
+    <table id="t-cost">
+      <thead><tr><th>项目</th><th>金额</th><th>占本金</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note" id="r-capacity"></div>
+  </div>
+
+  <div class="card">
+    <h2>⑤ 滚动样本外</h2>
+    <table id="t-wf">
+      <thead><tr><th>段</th><th>区间</th><th>夏普</th><th>年化</th><th>回撤</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note" id="r-wf"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ 视图四：持仓与定投 ══════════════════ -->
+<div id="view-portfolio" style="display:none">
+  <div class="card">
+    <h2>持仓概览</h2>
+    <div class="kpi">
+      <div class="box"><div class="l">总资产</div><div class="v" id="p-total">—</div></div>
+      <div class="box"><div class="l">持仓市值</div><div class="v" id="p-mv">—</div></div>
+      <div class="box"><div class="l">浮动盈亏</div><div class="v" id="p-pnl">—</div></div>
+      <div class="box"><div class="l">现金占比</div><div class="v" id="p-cash">—</div></div>
+    </div>
+    <div id="p-status" class="note"></div>
+    <table id="t-holdings">
+      <thead><tr><th>代码</th><th>类型</th><th>份额/股数</th><th>现价</th>
+      <th>市值</th><th>权重</th><th>盈亏%</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note" id="p-note"></div>
+  </div>
+
+  <div class="card">
+    <h2>定投分析（XIRR）</h2>
+    <div class="kpi">
+      <div class="box"><div class="l">累计投入</div><div class="v" id="d-invest">—</div></div>
+      <div class="box"><div class="l">当前市值</div><div class="v" id="d-mv">—</div></div>
+      <div class="box"><div class="l">XIRR 年化</div><div class="v" id="d-xirr">—</div></div>
+      <div class="box"><div class="l">定投次数</div><div class="v" id="d-times">—</div></div>
+    </div>
+    <div id="d-status" class="note"></div>
+    <table id="t-dca">
+      <thead><tr><th>代码</th><th>次数</th><th>投入</th><th>平均成本</th>
+      <th>现净值</th><th>市值</th><th>盈亏%</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note" id="d-note"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ 视图五：代码体检 ══════════════════ -->
+<div id="view-code" style="display:none">
+  <div class="card">
+    <h2>策略代码体检</h2>
+    <div class="note" style="margin-bottom:10px">
+      写一个 <code>make_weights(panel)</code> 函数，返回目标权重矩阵。
+      系统会用真实 A 股规则回测（T+1 / 涨跌停 / 印花税 / 佣金 / 滑点 / 冲击成本），
+      然后跑六维体检。
+    </div>
+    <div class="row">
+      <label class="chk">标的（逗号分隔）
+        <input id="c-codes" type="text" value="600519,000001"
+               style="width:220px;background:#11161d;border:1px solid var(--line);
+                      color:var(--fg);padding:5px 8px;border-radius:6px">
+      </label>
+      <button class="btn" id="c-run">运行体检</button>
+    </div>
+    <textarea id="c-src" spellcheck="false"
+      style="width:100%;height:210px;margin-top:12px;background:#0b0f14;
+             color:#c8d3e0;border:1px solid var(--line);border-radius:8px;
+             padding:10px;font-family:ui-monospace,Consolas,monospace;
+             font-size:12.5px;line-height:1.55;resize:vertical"></textarea>
+    <div id="c-status" class="note"></div>
+  </div>
+  <div class="card" id="c-result-card" style="display:none">
+    <h2>体检结果</h2>
+    <div class="kpi">
+      <div class="box"><div class="l">评分</div><div class="v" id="c-score">—</div></div>
+      <div class="box"><div class="l">等级</div><div class="v" id="c-grade">—</div></div>
+      <div class="box"><div class="l">年化</div><div class="v" id="c-cagr">—</div></div>
+      <div class="box"><div class="l">夏普</div><div class="v" id="c-sharpe">—</div></div>
+    </div>
+    <table id="t-dims">
+      <thead><tr><th>维度</th><th>得分</th><th>状态</th><th>说明</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note" id="c-extra"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ 视图六：市场与基本面 ══════════════════ -->
+<div id="view-market" style="display:none">
+
+  <div class="card">
+    <h2>全市场估值（zzshare）</h2>
+    <div class="row">
+      <button class="btn" id="v-refresh">刷新估值</button>
+      <span class="note" id="v-meta" style="margin:0"></span>
+    </div>
+    <div class="kpi">
+      <div class="box"><div class="l">覆盖只数</div><div class="v" id="v-n">—</div></div>
+      <div class="box"><div class="l">PE 中位</div><div class="v" id="v-pe">—</div></div>
+      <div class="box"><div class="l">PB 中位</div><div class="v" id="v-pb">—</div></div>
+      <div class="box"><div class="l">亏损股数</div><div class="v" id="v-neg">—</div></div>
+    </div>
+    <div class="note">
+      这是<strong>等权个股中位数</strong>，不等于指数 PE（指数按市值加权）。
+      PE 中位 30+ 是 A 股常态，因为有大量小市值高估值公司。
+    </div>
+    <div id="v-status" class="note"></div>
+  </div>
+
+  <div class="card">
+    <h2>海外指数（东财直连 → 新浪 → yfinance）</h2>
+    <div class="row">
+      <button class="btn" id="o-refresh">刷新指数</button>
+      <span class="note" id="o-meta" style="margin:0"></span>
+    </div>
+    <table id="t-overseas">
+      <thead><tr><th>指数</th><th>最新</th><th>近 1 年</th><th>数据源</th><th>区间</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note" id="o-note"></div>
+  </div>
+
+  <div class="card">
+    <h2>基本面质量（美股，ROIC.ai）</h2>
+    <div class="note" style="margin-bottom:10px">
+      输入美股代码（如 AAPL）。会拉三张财报表，约 36 秒；缓存 24 小时。
+      <strong>消耗 ROIC 配额（免费档 5 次/分钟）</strong>，请勿频繁点。
+    </div>
+    <div class="row">
+      <label class="chk">代码
+        <input id="q-ticker" type="text" value="AAPL"
+               style="width:110px;background:#11161d;border:1px solid var(--line);
+                      color:var(--fg);padding:5px 8px;border-radius:6px">
+      </label>
+      <button class="btn" id="q-run">查询基本面</button>
+      <span class="note" id="q-status" style="margin:0"></span>
+    </div>
+    <div class="kpi">
+      <div class="box"><div class="l">评分</div><div class="v" id="q-score">—</div></div>
+      <div class="box"><div class="l">等级</div><div class="v" id="q-level">—</div></div>
+      <div class="box"><div class="l">覆盖率</div><div class="v" id="q-cov">—</div></div>
+      <div class="box"><div class="l">期间</div><div class="v" id="q-period" style="font-size:14px">—</div></div>
+    </div>
+    <table id="t-quality">
+      <thead><tr><th>子项</th><th>得分</th><th>满分</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note" id="q-note"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ 视图七：仓位 ══════════════════ -->
+<div id="view-pos" style="display:none">
+
+  <div class="card">
+    <h2>仓位管理器（沪深300 趋势）</h2>
+    <div class="row" style="flex-wrap:wrap;gap:10px">
+      <label class="chk">均线 <input id="p-window" type="number" value="20"
+        min="5" max="250" style="width:64px"></label>
+      <label class="chk">缓冲带% <input id="p-band" type="number" value="2"
+        min="0" max="20" step="0.5" style="width:64px"></label>
+      <label class="chk">确认日 <input id="p-confirm" type="number" value="1"
+        min="1" max="10" style="width:64px"></label>
+      <label class="chk">上方上限% <input id="p-high" type="number" value="80"
+        min="0" max="100" style="width:64px"></label>
+      <label class="chk">下方上限% <input id="p-low" type="number" value="30"
+        min="0" max="100" style="width:64px"></label>
+      <button class="btn" id="p-run">刷新</button>
+    </div>
+    <div class="kpi">
+      <div class="box"><div class="l">当前状态</div><div class="v" id="p-state">—</div></div>
+      <div class="box"><div class="l">最大仓位</div><div class="v" id="p-cap">—</div></div>
+      <div class="box"><div class="l">沪深300</div><div class="v" id="p-close">—</div></div>
+      <div class="box"><div class="l">均线</div><div class="v" id="p-ma">—</div></div>
+    </div>
+    <div class="note" id="p-meta"></div>
+    <div id="p-status" class="note"></div>
+  </div>
+
+  <div class="card">
+    <h2>最近 20 个交易日</h2>
+    <table id="t-pos">
+      <thead><tr><th>日期</th><th>收盘</th><th>均线</th>
+        <th>偏离</th><th>仓位上限</th><th>状态</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note">
+      仓位上限随均线状态变化：上方 → 高上限，下方 → 低上限。
+      点上方参数可试不同组合，<strong>缓冲带能显著减少来回切换</strong>。
+    </div>
+  </div>
+</div>
+</main>
+<footer>纸盘研究工具 · 不构成投资建议 · 所有结论均基于上传/拉取的数据自动生成</footer>
+
+<script>
+(function(){
+  "use strict";
+  var files = {code:null, ret:null, w:null, b:null};
+
+  function $(id){ return document.getElementById(id); }
+  function md(s){
+    return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  }
+  function cls(prefix, val){ return prefix + "-" + String(val || "").replace(/[^A-Za-z]/g,""); }
+
+  /* ───────── 标签页 ───────── */
+  function switchTab(name){
+    var views = {checkup:"view-checkup", daily:"view-daily",
+                 risk:"view-risk", portfolio:"view-portfolio",
+                 code:"view-code", market:"view-market", pos:"view-pos"};
+    Object.keys(views).forEach(function(k){
+      $(views[k]).style.display = (k === name) ? "block" : "none";
+      $("tab-" + k).className = (k === name) ? "on" : "";
+    });
+    if(name === "daily") loadDaily();
+    if(name === "risk")  loadRisk();
+    if(name === "portfolio") { loadPortfolio(); loadDca(); }
+    if(name === "code")  renderCodeHint();
+    if(name === "market") { loadValuation(); loadOverseas(); }
+    if(name === "pos") loadPosition();
+  }
+  $("tab-checkup").addEventListener("click", function(){ switchTab("checkup"); });
+  $("tab-daily").addEventListener("click", function(){ switchTab("daily"); });
+  $("tab-risk").addEventListener("click", function(){ switchTab("risk"); });
+  $("tab-portfolio").addEventListener("click", function(){ switchTab("portfolio"); });
+  $("tab-code").addEventListener("click", function(){ switchTab("code"); });
+  $("tab-market").addEventListener("click", function(){ switchTab("market"); });
+  $("tab-pos").addEventListener("click", function(){ switchTab("pos"); });
+
+  /* ───────── 文件上传 ───────── */
+  function bindFile(inputId, boxId, nameId, key){
+    var input = $(inputId), box = $(boxId), nm = $(nameId);
+    box.addEventListener("click", function(e){
+      if(e.target.tagName !== "INPUT") input.click();
+    });
+    input.addEventListener("change", function(){
+      var f = input.files && input.files[0];
+      if(!f) return;
+      var reader = new FileReader();
+      reader.onload = function(){
+        files[key] = {name:f.name, text:String(reader.result)};
+        nm.textContent = f.name + "  (" + Math.round(f.size/1024) + " KB)";
+        box.classList.add("filled");
+        refreshBtn();
+      };
+      reader.onerror = function(){ setStatus("读取文件失败：" + f.name, "err"); };
+      reader.readAsText(f, "utf-8");
+    });
+  }
+  bindFile("f-code","box-code","n-code","code");
+  bindFile("f-ret","box-ret","n-ret","ret");
+  bindFile("f-w","box-w","n-w","w");
+  bindFile("f-b","box-b","n-b","b");
+
+  function refreshBtn(){ $("go").disabled = !files.ret; }
+  function setStatus(msg, c){ var s=$("status"); s.className=c||""; s.textContent=msg||""; }
+
+  /* ───────── 雷达图 ───────── */
+  function drawRadar(radar, dims){
+    var cv = $("radar"), ctx = cv.getContext("2d");
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    var cx = W/2, cy = H/2 + 6, R = Math.min(W,H)/2 - 62;
+    var labels = dims.map(function(d){ return d.label; });
+    var values = dims.map(function(d){
+      var v = radar[d.key];
+      return (v === null || v === undefined) ? null : Math.max(0, Math.min(100, v));
+    });
+    var n = dims.length;
+    if(!n) return;
+    function pt(i, frac){
+      var ang = -Math.PI/2 + i * 2*Math.PI/n;
+      return [cx + Math.cos(ang)*R*frac, cy + Math.sin(ang)*R*frac];
+    }
+    for(var ring=1; ring<=4; ring++){
+      ctx.beginPath();
+      for(var i=0;i<n;i++){ var p = pt(i, ring/4); i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); }
+      ctx.closePath();
+      ctx.strokeStyle = ring===4 ? "#3a4150" : "#242a35"; ctx.lineWidth = 1; ctx.stroke();
+    }
+    for(var i=0;i<n;i++){
+      var p = pt(i,1);
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(p[0],p[1]);
+      ctx.strokeStyle = "#242a35"; ctx.stroke();
+    }
+    var pts = [];
+    for(var i=0;i<n;i++){ if(values[i] !== null) pts.push({i:i, p:pt(i, values[i]/100)}); }
+    if(pts.length >= 3){
+      ctx.beginPath();
+      pts.forEach(function(o,k){ k?ctx.lineTo(o.p[0],o.p[1]):ctx.moveTo(o.p[0],o.p[1]); });
+      ctx.closePath();
+      ctx.fillStyle = "rgba(46,134,222,0.22)"; ctx.fill();
+      ctx.strokeStyle = "#2e86de"; ctx.lineWidth = 2; ctx.stroke();
+      pts.forEach(function(o){
+        ctx.beginPath(); ctx.arc(o.p[0],o.p[1],4,0,Math.PI*2);
+        ctx.fillStyle = "#2e86de"; ctx.fill();
+      });
+    }
+    ctx.font = "12.5px 'Microsoft YaHei',sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for(var i=0;i<n;i++){
+      var p = pt(i,1.19), v = values[i];
+      ctx.fillStyle = v === null ? "#5a6270" : "#e6e6e6";
+      ctx.fillText(labels[i], p[0], p[1] - 7);
+      ctx.font = "11.5px monospace";
+      ctx.fillStyle = v === null ? "#5a6270" : "#8b949e";
+      ctx.fillText(v === null ? "N/A" : v.toFixed(0), p[0], p[1] + 9);
+      ctx.font = "12.5px 'Microsoft YaHei',sans-serif";
+    }
+  }
+
+  /* ───────── 净值曲线 ───────── */
+  function drawNav(dates, nav){
+    var cv = $("navchart"), ctx = cv.getContext("2d");
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    if(!nav || nav.length < 2){
+      ctx.fillStyle = "#5a6270"; ctx.font = "13px sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("净值数据不足", W/2, H/2);
+      return;
+    }
+    var padL = 62, padR = 18, padT = 16, padB = 28;
+    var lo = Math.min.apply(null, nav), hi = Math.max.apply(null, nav);
+    var span = (hi - lo) || 1;
+    lo -= span * 0.08; hi += span * 0.08; span = hi - lo;
+    function X(i){ return padL + (W-padL-padR) * (i/(nav.length-1)); }
+    function Y(v){ return padT + (H-padT-padB) * (1 - (v-lo)/span); }
+
+    ctx.strokeStyle = "#242a35"; ctx.fillStyle = "#5a6270";
+    ctx.font = "11.5px monospace"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for(var g=0; g<=4; g++){
+      var y = padT + (H-padT-padB) * g/4;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
+      ctx.fillText(String(Math.round(hi - span*g/4)), padL-8, y);
+    }
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(nav[0]));
+    for(var i=1;i<nav.length;i++) ctx.lineTo(X(i), Y(nav[i]));
+    ctx.lineTo(X(nav.length-1), H-padB); ctx.lineTo(X(0), H-padB); ctx.closePath();
+    var grad = ctx.createLinearGradient(0, padT, 0, H-padB);
+    grad.addColorStop(0, "rgba(46,134,222,0.30)");
+    grad.addColorStop(1, "rgba(46,134,222,0.02)");
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(nav[0]));
+    for(var i=1;i<nav.length;i++) ctx.lineTo(X(i), Y(nav[i]));
+    ctx.strokeStyle = "#2e86de"; ctx.lineWidth = 1.8; ctx.stroke();
+    ctx.fillStyle = "#5a6270"; ctx.textBaseline = "top";
+    ctx.textAlign = "left";  ctx.fillText(dates[0] || "", padL, H-padB+6);
+    ctx.textAlign = "right"; ctx.fillText(dates[dates.length-1] || "", W-padR, H-padB+6);
+  }
+
+  /* ───────── 体检渲染 ───────── */
+  function render(data){
+    var rep = data.report, diag = data.diagnosis;
+    $("result").style.display = "block";
+    var vEl = $("k-verdict"), gEl = $("k-grade");
+    vEl.textContent = rep.verdict; vEl.className = "v " + cls("verdict", rep.verdict);
+    gEl.textContent = rep.grade;   gEl.className = "v " + cls("grade", rep.grade);
+    $("k-score").textContent = rep.score;
+    $("k-days").textContent = (rep.inputs && rep.inputs.n_days) || "—";
+    $("k-summary").textContent = rep.summary || "";
+
+    drawRadar(rep.radar || {}, rep.dimensions || []);
+
+    var tb = $("t-dims").querySelector("tbody"); tb.innerHTML = "";
+    (rep.dimensions||[]).forEach(function(d){
+      var tr = document.createElement("tr");
+      var sc = (d.score === null || d.score === undefined) ? "N/A" : Number(d.score).toFixed(0);
+      tr.innerHTML = "<td>" + d.label + "</td>" +
+        "<td class='num'>" + Number(d.weight).toFixed(2) + "</td>" +
+        "<td class='num'>" + sc + "</td>" +
+        "<td><span class='tag " + String(d.status).replace("/","") + "'>" + d.status + "</span></td>" +
+        "<td class='note'>" + (d.note || "") + "</td>";
+      tb.appendChild(tr);
+    });
+
+    $("d-summary").innerHTML = md(diag.summary);
+    $("d-fatal").innerHTML   = md(diag.fatal);
+    $("d-advice").innerHTML  = md(diag.advice);
+    var badge = $("d-badge");
+    if(diag.source === "llm"){ badge.textContent = "大模型 · " + (diag.model||""); badge.className="badge"; }
+    else { badge.textContent = "本地模板（降级）"; badge.className="badge deg"; }
+
+    var issues = diag.issues || [];
+    if(issues.length){
+      $("c-issues").style.display = "block";
+      var ti = $("t-issues").querySelector("tbody"); ti.innerHTML = "";
+      issues.forEach(function(it){
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + (it.label || it.dimension || "-") + "</td>" +
+          "<td>" + (it.severity || "-") + "</td>" +
+          "<td class='note'>" + (it.fix || it.suggested_fix || "") + "</td>";
+        ti.appendChild(tr);
+      });
+    } else { $("c-issues").style.display = "none"; }
+
+    var finds = data.findings || [];
+    if(finds.length){
+      $("c-find").style.display = "block";
+      var tf = $("t-find").querySelector("tbody"); tf.innerHTML = "";
+      finds.forEach(function(f){
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td class='num'>" + f.line + "</td>" +
+          "<td>" + f.rule + " " + f.name + "</td>" +
+          "<td class='note'>" + f.why + "</td>" +
+          "<td class='note'>" + f.fix + "</td>";
+        tf.appendChild(tr);
+      });
+    } else { $("c-find").style.display = "none"; }
+
+    var warns = data.warnings || [];
+    if(warns.length){
+      $("c-warn").style.display = "block";
+      var ul = $("u-warn"); ul.innerHTML = "";
+      warns.forEach(function(w){ var li=document.createElement("li"); li.textContent=w; ul.appendChild(li); });
+    } else { $("c-warn").style.display = "none"; }
+  }
+
+  /* ───────── 每日监控 ───────── */
+  function mStatus(msg, c){ var s=$("m-status"); s.className=c||""; s.textContent=msg||""; }
+
+  function loadDaily(){
+    mStatus("加载中…");
+    Promise.all([
+      fetch("/api/daily/latest").then(function(r){ return r.ok ? r.json() : null; }),
+      fetch("/api/daily/history?limit=30").then(function(r){ return r.ok ? r.json() : {items:[]}; }),
+      fetch("/api/paper/nav?limit=500").then(function(r){ return r.ok ? r.json() : null; })
+    ]).then(function(res){
+      var latest = res[0], hist = res[1] || {items:[]}, navd = res[2];
+      if(latest) renderDaily(latest); else renderDailyEmpty();
+      renderHistory(hist.items || []);
+      if(navd && navd.nav) { drawNav(navd.dates, navd.nav);
+        $("nav-meta").textContent = navd.n + " 个交易日";
+      } else { drawNav([], []); $("nav-meta").textContent = "尚无净值数据"; }
+      mStatus(latest ? "已加载最近一次日更" : "尚无日更记录，可点「立即更新」", latest ? "ok" : "warn");
+    }).catch(function(e){
+      mStatus("加载失败：" + e.message, "err");
+    });
+  }
+
+  function renderDailyEmpty(){
+    $("m-verdict").textContent = "—"; $("m-grade").textContent = "—";
+    $("m-score").textContent = "—";   $("m-nav").textContent = "—";
+    $("m-changes").innerHTML = "<li class='low'>还没有日更记录，点「立即更新」生成第一份</li>";
+    ["m-dsummary","m-dfatal","m-dadvice"].forEach(function(id){ $(id).textContent = "—"; });
+    $("m-badge").textContent = "";
+  }
+
+  function renderDaily(d){
+    var rep = d.report || {}, diag = d.diagnosis || {};
+    var v = $("m-verdict"), g = $("m-grade");
+    v.textContent = rep.verdict || "—"; v.className = "v " + cls("verdict", rep.verdict);
+    g.textContent = rep.grade || "—";   g.className = "v " + cls("grade", rep.grade);
+    $("m-score").textContent = (rep.score === undefined || rep.score === null ? "—" : rep.score);
+    $("m-nav").textContent = d.nav_latest ? Math.round(d.nav_latest).toLocaleString() : "—";
+    $("m-meta").textContent = "更新于 " + (d.generated_at || "") +
+      " · 净值 " + (d.nav_days || "?") + " 天 · 标的 " + ((d.watchlist||[]).length) + " 只";
+
+    var ul = $("m-changes"); ul.innerHTML = "";
+    var chs = d.changes || [];
+    if(!chs.length){ ul.innerHTML = "<li class='low'>本次无实质变化</li>"; }
+    chs.forEach(function(c){
+      var li = document.createElement("li");
+      li.className = c.level || "low";
+      li.textContent = c.msg;
+      ul.appendChild(li);
+    });
+
+    $("m-dsummary").innerHTML = md(diag.summary);
+    $("m-dfatal").innerHTML   = md(diag.fatal);
+    $("m-dadvice").innerHTML  = md(diag.advice);
+    var b = $("m-badge");
+    if(diag.source === "llm"){ b.textContent = "大模型 · " + (diag.model||""); b.className="badge"; }
+    else { b.textContent = "本地模板（降级）"; b.className="badge deg"; }
+  }
+
+  function renderHistory(items){
+    var tb = $("t-history").querySelector("tbody"); tb.innerHTML = "";
+    if(!items.length){
+      tb.innerHTML = "<tr><td colspan='6' class='empty'>暂无记录</td></tr>";
+      return;
+    }
+    items.slice().reverse().forEach(function(it){
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + (it.date||"") + "</td>" +
+        "<td class='" + cls("verdict", it.verdict) + "'>" + (it.verdict||"—") + "</td>" +
+        "<td class='" + cls("grade", it.grade) + "'>" + (it.grade||"—") + "</td>" +
+        "<td class='num'>" + (it.score===null||it.score===undefined?"—":it.score) + "</td>" +
+        "<td class='num'>" + (it.nav_latest?Math.round(it.nav_latest).toLocaleString():"—") + "</td>" +
+        "<td class='num'>" + (it.n_changes||0) + "</td>";
+      tb.appendChild(tr);
+    });
+  }
+
+  $("refresh").addEventListener("click", function(){
+    var btn = this;
+    btn.disabled = true;
+    mStatus("正在拉取最新数据并重算，约 5 秒…");
+    fetch("/api/daily/run", {method:"POST"})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+      .then(function(res){
+        if(!res.ok){
+          mStatus("更新失败：" + (res.body.detail || "未知错误"), "err");
+          return;
+        }
+        mStatus("更新完成 · " + (res.body.elapsed_ms||0) + " ms", "ok");
+        loadDaily();
+      })
+      .catch(function(e){ mStatus("请求失败：" + e.message, "err"); })
+      .then(function(){ btn.disabled = false; });
+  });
+
+  /* ───────── 体检提交 ───────── */
+  $("go").addEventListener("click", function(){
+    if(!files.ret){ setStatus("请先上传收益序列 CSV", "err"); return; }
+    var btn = $("go");
+    btn.disabled = true;
+    setStatus("体检中，请稍候…");
+    var body = {
+      code: files.code ? files.code.text : "",
+      returns_csv: files.ret.text,
+      weights_csv: files.w ? files.w.text : null,
+      bench_csv: files.b ? files.b.text : null,
+      use_llm: $("use-llm").checked
+    };
+    fetch("/api/checkup", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(body)
+    }).then(function(r){
+      return r.json().then(function(j){ return {ok:r.ok, body:j}; });
+    }).then(function(res){
+      if(!res.ok){
+        var d = res.body && res.body.detail;
+        setStatus("体检失败：" + (typeof d === "string" ? d : JSON.stringify(d)), "err");
+        return;
+      }
+      setStatus("体检完成 · " + (res.body.diagnosis && res.body.diagnosis.source === "llm"
+                ? "大模型诊断" : "本地模板诊断"), "ok");
+      render(res.body);
+      $("result").scrollIntoView({behavior:"smooth", block:"start"});
+    }).catch(function(e){
+      setStatus("请求失败：" + e.message + "（请确认后端已启动）", "err");
+    }).then(function(){ btn.disabled = false; });
+  });
+
+  /* ───────── 示例数据 ───────── */
+  $("demo").addEventListener("click", function(){
+    var code = [
+      "# 示例：一个含未来函数的策略（应被拦下）",
+      "import pandas as pd",
+      "df = pd.read_csv('data.csv')",
+      "close = df['close']",
+      "signal = close.shift(-1) / close - 1   # 未来函数",
+      "ret = close.pct_change()               # 未禁用前向填充",
+      "score = df['factor'].fillna(0)         # 缺失当中性分",
+      "ranked = score.rank()                  # 并列未打散"
+    ].join("\n");
+
+    var rows = ["date,ret"], seed = 20261104, start = new Date(Date.UTC(2023,0,2));
+    var d = new Date(start), n = 0;
+    while(n < 420){
+      var wd = d.getUTCDay();
+      if(wd !== 0 && wd !== 6){
+        var z = 0;
+        for(var k=0;k<12;k++){ seed=(seed*1103515245+12345)%2147483648; z += seed/2147483648; }
+        z = (z - 6);
+        rows.push(d.toISOString().slice(0,10) + "," + (0.0006 + 0.011*z).toFixed(6));
+        n++;
+      }
+      d = new Date(d.getTime() + 86400000);
+    }
+    files.code = {name:"demo_strategy.py", text:code};
+    files.ret  = {name:"demo_returns.csv", text:rows.join("\n")};
+    $("n-code").textContent = "demo_strategy.py  (示例)";
+    $("n-ret").textContent  = "demo_returns.csv  (示例 420 行)";
+    $("box-code").classList.add("filled");
+    $("box-ret").classList.add("filled");
+    refreshBtn();
+    setStatus("已载入示例数据，可直接点击「开始体检」", "ok");
+  });
+
+  /* ───────── 风控仪表盘 ───────── */
+  function rStatus(msg, c){ var s=$("r-status"); s.className=c||""; s.textContent=msg||""; }
+
+  function riskQuery(){
+    var cap = Number($("r-cap").value) || 100000;
+    var turn = Number($("r-turn").value) || 12;
+    return "?capital=" + cap + "&turnover=" + turn;
+  }
+
+  function loadRisk(){
+    rStatus("评估中…");
+    fetch("/api/risk" + riskQuery())
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+      .then(function(res){
+        if(!res.ok){
+          rStatus("评估失败：" + (res.body.detail || "未知错误"), "err");
+          return;
+        }
+        renderRisk(res.body);
+        rStatus("评估完成", "ok");
+      })
+      .catch(function(e){ rStatus("请求失败：" + e.message, "err"); });
+  }
+
+  function renderRisk(d){
+    var dec = d.decision || {}, dd = d.drawdown || {},
+        cr = d.crowding || {}, dq = d.data || {}, fr = d.fragility || {};
+
+    // 大号动作
+    var act = dec.action || "—";
+    var aEl = $("r-action");
+    aEl.textContent = act === "NORMAL" ? "正常交易"
+                    : act === "REDUCE" ? "减仓" : act === "HALT" ? "暂停交易" : "—";
+    aEl.style.color = act === "NORMAL" ? "#26de81"
+                    : act === "REDUCE" ? "#feca57" : "#ff4b4b";
+    $("r-scale").textContent = "目标仓位系数 " + (dec.scale === undefined ? "—" : dec.scale)
+      + (dec.cooldown_remaining ? "    冷却期剩余 " + dec.cooldown_remaining + " 天" : "");
+    $("r-meta").textContent = "评估于 " + (d.as_of || "") + " · 净值 " + (d.n_days || "?")
+      + " 天 · 持仓 " + ((d.inputs && d.inputs.n_codes) || 0) + " 只";
+
+    $("r-dd").textContent = dd.current_drawdown !== undefined
+      ? (dd.current_drawdown * 100).toFixed(1) + "%" : "—";
+    $("r-crowd").textContent = cr.score !== undefined && cr.score !== null
+      ? cr.score.toFixed(0) : "—";
+    $("r-data").textContent = dq.score !== undefined ? dq.score.toFixed(0) : "—";
+    $("r-frag").textContent = fr.score !== undefined ? fr.score.toFixed(0) : "—";
+
+    // 触发原因
+    var ul = $("r-reasons"); ul.innerHTML = "";
+    var rs = dec.reasons || [];
+    if(!rs.length){ ul.innerHTML = "<li class='low'>无触发项，风控正常</li>"; }
+    rs.forEach(function(x){
+      var li = document.createElement("li");
+      li.className = x.level === "high" ? "high" : x.level === "mid" ? "mid" : "low";
+      li.textContent = x.why;
+      ul.appendChild(li);
+    });
+
+    // 四道闸门
+    var tb = $("t-gates").querySelector("tbody"); tb.innerHTML = "";
+    function gate(name, val, limit, st){
+      var tr = document.createElement("tr");
+      var cls = st === "OK" ? "PASS" : st === "WARN" ? "WARN" : "FAIL";
+      tr.innerHTML = "<td>" + name + "</td><td class='num'>" + val +
+        "</td><td class='num'>" + limit + "</td><td><span class='tag " + cls +
+        "'>" + st + "</span></td>";
+      tb.appendChild(tr);
+    }
+    var lim = d.limits || {};
+    gate("回撤上限",
+         dd.current_drawdown !== undefined ? (dd.current_drawdown*100).toFixed(1)+"%" : "—",
+         "-" + ((lim.max_drawdown||0)*100).toFixed(0) + "%",
+         dd.status === "NORMAL" ? "OK" : dd.status === "REDUCE" ? "WARN" : "BREACH");
+    gate("拥挤度",
+         cr.score !== undefined && cr.score !== null ? cr.score.toFixed(0) : "—",
+         String(lim.max_crowding || "—"),
+         !cr.ok ? "WARN" : cr.score >= (lim.max_crowding||70) ? "BREACH"
+                 : cr.score >= (lim.max_crowding||70)*0.7 ? "WARN" : "OK");
+    gate("风格暴露",
+         (d.style && d.style.max_share !== undefined)
+           ? (d.style.max_share*100).toFixed(0)+"%" : "—",
+         ((lim.max_style_exposure||0)*100).toFixed(0) + "%",
+         (d.style && d.style.breaches && d.style.breaches.length) ? "BREACH" : "OK");
+    gate("换手率",
+         Number(d.inputs && d.inputs.turnover || 0).toFixed(1) + "x",
+         (lim.max_turnover_annual||"—") + "x",
+         Number(d.inputs && d.inputs.turnover || 0) > (lim.max_turnover_annual||6)
+           ? "WARN" : "OK");
+
+    // 成本
+    var c = d.cost || {};
+    var tc = $("t-cost").querySelector("tbody"); tc.innerHTML = "";
+    [["佣金", c.commission], ["印花税", c.stamp_duty], ["过户费", c.transfer_fee],
+     ["价差", c.spread], ["冲击成本", c.impact]].forEach(function(pair){
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + pair[0] + "</td><td class='num'>" +
+        (pair[1]||0).toLocaleString(undefined,{maximumFractionDigits:0}) +
+        "</td><td class='num'>" +
+        (c.capital ? ((pair[1]||0)/c.capital*100).toFixed(2)+"%" : "—") + "</td>";
+      tc.appendChild(tr);
+    });
+    var trt = document.createElement("tr");
+    trt.innerHTML = "<td><b>合计</b></td><td class='num'><b>" +
+      (c.total||0).toLocaleString(undefined,{maximumFractionDigits:0}) +
+      "</b></td><td class='num'><b>" +
+      ((c.total_pct||0)*100).toFixed(2) + "%</b></td>";
+    tc.appendChild(trt);
+    $("r-capacity").textContent = d.capacity
+      ? "容量上限（3% 成本预算）约 " + Math.round(d.capacity).toLocaleString() + " 元"
+        + (d.inputs && d.inputs.capital > d.capacity ? "  ⚠ 当前资金已超过容量上限" : "")
+      : "容量上限无法计算";
+
+    // 滚动样本外
+    var tw = $("t-wf").querySelector("tbody"); tw.innerHTML = "";
+    var wf = d.walkforward || {};
+    if(wf.ok){
+      (wf.folds||[]).forEach(function(f){
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + f.fold + "</td><td>" + f.start + " ~ " + f.end +
+          "</td><td class='num'>" + f.sharpe.toFixed(2) +
+          "</td><td class='num'>" + (f.annual_return*100).toFixed(2) +
+          "%</td><td class='num'>" + (f.max_drawdown*100).toFixed(2) + "%</td>";
+        tw.appendChild(tr);
+      });
+      $("r-wf").textContent = "命中率 " + (wf.hit_rate*100).toFixed(0) + "% · "
+        + wf.verdict;
+    } else {
+      tw.innerHTML = "<tr><td colspan='5' class='empty'>" +
+        (wf.reason || "数据不足") + "</td></tr>";
+      $("r-wf").textContent = "";
+    }
+  }
+
+  $("r-refresh").addEventListener("click", loadRisk);
+
+  /* ───────── 持仓与定投 ───────── */
+  function num(v, digits){
+    if(v === null || v === undefined || isNaN(v)) return "—";
+    return Number(v).toLocaleString(undefined,
+      {minimumFractionDigits: digits||0, maximumFractionDigits: digits||0});
+  }
+  function pct(v, digits){
+    if(v === null || v === undefined || isNaN(v)) return "—";
+    var d = (digits === undefined) ? 2 : digits;
+    return (Number(v) * 100).toFixed(d) + "%";
+  }
+
+  function loadPortfolio(){
+    var st = $("p-status");
+    st.textContent = "加载中…";
+    fetch("/api/portfolio")
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+      .then(function(res){
+        if(!res.ok){
+          st.textContent = "加载失败：" + (res.body.detail || "未知错误");
+          return;
+        }
+        var p = res.body.portfolio || {};
+        st.textContent = "";
+        $("p-total").textContent = num(p.total_value, 0);
+        $("p-mv").textContent    = num(p.market_value, 0);
+        var pnl = p.total_pnl;
+        $("p-pnl").textContent = (pnl === null || pnl === undefined)
+          ? "—" : (pnl >= 0 ? "+" : "") + num(pnl, 0) + " (" + pct(p.total_pnl_pct) + ")";
+        $("p-pnl").style.color = (pnl > 0) ? "#26de81" : (pnl < 0 ? "#ff4b4b" : "");
+        $("p-cash").textContent = pct(p.cash_ratio, 1);
+
+        var tb = $("t-holdings").querySelector("tbody");
+        tb.innerHTML = "";
+        (p.holdings || []).forEach(function(h){
+          var tr = document.createElement("tr");
+          var pnlCell = (h.pnl_pct === null || h.pnl_pct === undefined)
+            ? "—" : ((h.pnl_pct >= 0 ? "+" : "") + (h.pnl_pct*100).toFixed(2));
+          tr.innerHTML = "<td>" + h.code + "</td><td>" + (h.kind || "—") +
+            "</td><td class='num'>" + num(h.shares, 0) +
+            "</td><td class='num'>" + num(h.price, 4) +
+            "</td><td class='num'>" + num(h.market_value, 0) +
+            "</td><td class='num'>" + pct(h.weight, 2) +
+            "</td><td class='num'>" + pnlCell + "</td>";
+          tb.appendChild(tr);
+        });
+        $("p-note").textContent = (p.warnings && p.warnings.length)
+          ? p.warnings.join("  |  ") : "";
+      })
+      .catch(function(e){ st.textContent = "请求失败：" + e.message; });
+  }
+
+  function loadDca(){
+    var st = $("d-status");
+    st.textContent = "加载中…";
+    fetch("/api/dca")
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+      .then(function(res){
+        if(!res.ok){
+          st.textContent = "加载失败：" + (res.body.detail || "未知错误");
+          return;
+        }
+        var d = res.body.result || {};
+        if(!d.ok){ st.textContent = "无法分析：" + (d.reason || ""); return; }
+        st.textContent = "";
+        $("d-invest").textContent = num(d.invested, 0);
+        $("d-mv").textContent     = num(d.market_value, 0);
+        $("d-xirr").textContent   = pct(d.xirr, 2);
+        $("d-xirr").style.color   = (d.xirr > 0) ? "#26de81" : "#ff4b4b";
+        $("d-times").textContent  = d.n_buys_total;
+
+        var tb = $("t-dca").querySelector("tbody");
+        tb.innerHTML = "";
+        (d.positions || []).forEach(function(x){
+          var tr = document.createElement("tr");
+          var pc = (x.pnl_pct === null || x.pnl_pct === undefined)
+            ? "—" : ((x.pnl_pct >= 0 ? "+" : "") + (x.pnl_pct*100).toFixed(2));
+          tr.innerHTML = "<td>" + x.code + "</td><td class='num'>" + x.n_buys +
+            "</td><td class='num'>" + num(x.invested, 0) +
+            "</td><td class='num'>" + num(x.avg_cost, 4) +
+            "</td><td class='num'>" + num(x.current_nav, 4) +
+            "</td><td class='num'>" + num(x.market_value, 0) +
+            "</td><td class='num'>" + pc + "</td>";
+          tb.appendChild(tr);
+        });
+        var note = d.xirr_ok ? "XIRR 是资金加权年化，定投必须用这个口径"
+                             : ("XIRR 无法计算：" + (d.xirr_reason || ""));
+        if(res.body.warnings && res.body.warnings.length)
+          note += "  |  " + res.body.warnings.join("  |  ");
+        $("d-note").textContent = note;
+      })
+      .catch(function(e){ st.textContent = "请求失败：" + e.message; });
+  }
+
+  /* ───────── 代码体检 ───────── */
+  function renderCodeHint(){
+    var ta = $("c-src");
+    if(ta.value.trim()) return;
+    ta.value = [
+      "def make_weights(panel):",
+      "    import pandas as pd",
+      "    out = {}",
+      "    for code, df in panel.items():",
+      "        ma = df['close'].rolling(20).mean()",
+      "        out[code] = (df['close'] > ma).astype(float)",
+      "    w = pd.DataFrame(out)",
+      "    w.index = pd.to_datetime(panel[list(panel)[0]]['date'])",
+      "    return w.div(w.sum(axis=1).replace(0, 1), axis=0) * 0.9",
+      ""
+    ].join("\n");
+  }
+
+  function runCodeCheckup(){
+    var st = $("c-status");
+    var src = $("c-src").value;
+    if(!src.trim()){ st.textContent = "请先填写策略代码"; return; }
+    var codes = $("c-codes").value.split(",")
+      .map(function(s){ return s.trim(); })
+      .filter(function(s){ return s.length > 0; });
+    st.textContent = "回测中…（首次取行情会慢一些）";
+    fetch("/api/checkup_code", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({code: src, codes: codes})
+    })
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+      .then(function(res){
+        if(!res.ok){
+          st.textContent = "失败：" + (res.body.detail || "未知错误");
+          return;
+        }
+        var rep = res.body.report || {};
+        st.textContent = "";
+        $("c-result-card").style.display = "block";
+        $("c-score").textContent  = (rep.score === null || rep.score === undefined) ? "—" : rep.score;
+        $("c-grade").textContent  = rep.grade || "—";
+        $("c-grade").style.color  = (rep.grade === "A") ? "#26de81"
+          : (rep.grade === "B") ? "#54a0ff"
+          : (rep.grade === "C") ? "#feca57" : "#ff4b4b";
+        var bt = rep.backtest || {};
+        $("c-cagr").textContent   = pct(bt.cagr, 2);
+        $("c-sharpe").textContent = (bt.sharpe === undefined || isNaN(bt.sharpe))
+          ? "—" : Number(bt.sharpe).toFixed(2);
+
+        var tb = $("t-dims").querySelector("tbody");
+        tb.innerHTML = "";
+        (rep.dimensions || []).forEach(function(d){
+          var tr = document.createElement("tr");
+          var s = (d.score === null) ? "—" : Number(d.score).toFixed(0);
+          tr.innerHTML = "<td>" + d.label + "</td><td class='num'>" + s +
+            "</td><td>" + d.status + "</td><td>" + (d.note || "") + "</td>";
+          tb.appendChild(tr);
+        });
+
+        var extra = [];
+        if(bt.days) extra.push("回测 " + bt.days + " 天");
+        if(bt.total_return !== undefined) extra.push("累计 " + pct(bt.total_return));
+        if(bt.max_drawdown !== undefined) extra.push("回撤 " + pct(bt.max_drawdown));
+        if(rep.cost_turnover !== undefined) extra.push("年换手 " + rep.cost_turnover);
+        if(rep.grade_caps && rep.grade_caps.length)
+          extra.push("封顶：" + rep.grade_caps.join("；"));
+        if(res.body.missing && res.body.missing.length)
+          extra.push("缺数据：" + res.body.missing.join(","));
+        $("c-extra").textContent = extra.join("   ");
+      })
+      .catch(function(e){ st.textContent = "请求失败：" + e.message; });
+  }
+
+  $("c-run").addEventListener("click", runCodeCheckup);
+
+  /* ───────── 全市场估值 ───────── */
+  function loadValuation(){
+    var st = $("v-status");
+    st.textContent = "加载中…（zzshare，通常 1 秒）";
+    fetch("/api/valuation")
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+      .then(function(res){
+        if(!res.ok){
+          st.textContent = "加载失败：" + (res.body.detail || "未知错误");
+          return;
+        }
+        var s = res.body.snapshot || {};
+        st.textContent = "";
+        $("v-meta").textContent = "数据日 " + (s.date || "—");
+        $("v-n").textContent   = s.n || "—";
+        $("v-pe").textContent  = (s.PE && s.PE.median !== null) ? s.PE.median : "—";
+        $("v-pb").textContent  = (s.PB && s.PB.median !== null) ? s.PB.median : "—";
+        $("v-neg").textContent = (s.PE && s.PE.n_negative !== undefined)
+          ? s.PE.n_negative : "—";
+      })
+      .catch(function(e){ st.textContent = "请求失败：" + e.message; });
+  }
+
+  /* ───────── 海外指数 ───────── */
+  var OVERSEAS_KEYS = [
+    ["sp500",  "标普500"],
+    ["ndx",    "纳斯达克100"],
+    ["nikkei", "日经225"],
+    ["ftse",   "英国富时100"]
+  ];
+
+  function loadOverseas(){
+    var tb = $("t-overseas").querySelector("tbody");
+    tb.innerHTML = "";
+    $("o-meta").textContent = "逐个拉取中…";
+    var done = 0, rows = [];
+
+    OVERSEAS_KEYS.forEach(function(pair){
+      var key = pair[0], label = pair[1];
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + label + "</td><td class='num'>加载中…</td>" +
+                     "<td>—</td><td>—</td><td>—</td>";
+      tb.appendChild(tr);
+
+      fetch("/api/overseas?key=" + key + "&days=300")
+        .then(function(r){ return r.json(); })
+        .then(function(b){
+          var r0 = b.result || {};
+          if(b.ok){
+            var tail = r0.series_tail || [];
+            var yearPct = "—";
+            if(tail.length > 1){
+              var first = tail[0].close, last = tail[tail.length - 1].close;
+              if(first > 0) yearPct = ((last / first - 1) * 100).toFixed(2) + "%";
+            }
+            tr.innerHTML = "<td>" + label + "</td>" +
+              "<td class='num'>" + Number(r0.latest).toLocaleString() + "</td>" +
+              "<td class='num'>" + yearPct + "</td>" +
+              "<td>" + (r0.source || "—") + "</td>" +
+              "<td class='num'>" + tail.length + " 天</td>";
+          } else {
+            var errs = (r0.errors || []).join("；").slice(0, 60);
+            tr.innerHTML = "<td>" + label + "</td><td>失败</td><td>—</td>" +
+              "<td>" + errs + "</td><td>—</td>";
+          }
+        })
+        .catch(function(e){
+          tr.innerHTML = "<td>" + label + "</td><td>请求失败</td>" +
+                         "<td>—</td><td>" + e.message.slice(0, 40) + "</td><td>—</td>";
+        })
+        .then(function(){
+          done += 1;
+          if(done === OVERSEAS_KEYS.length){
+            $("o-meta").textContent = "共 " + done + " 个指数";
+          }
+        });
+    });
+    $("o-note").textContent =
+      "yfinance 在国内网络被封锁（403），实际走东财直连；详见 overseas --diagnose";
+  }
+
+  /* ───────── 基本面质量 ───────── */
+  function runQuality(){
+    var st = $("q-status");
+    var ticker = ($("q-ticker").value || "").trim().toUpperCase();
+    if(!ticker){ st.textContent = "请输入代码"; return; }
+    st.textContent = "拉取财报中…（约 36 秒，缓存命中则秒回）";
+    fetch("/api/quality?ticker=" + encodeURIComponent(ticker))
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+      .then(function(res){
+        if(!res.ok){
+          st.textContent = "失败：" + (res.body.detail || "未知错误");
+          return;
+        }
+        var rep = res.body.report || {};
+        if(!rep.ok){
+          st.textContent = "无法评估：" + (rep.reason || "");
+          return;
+        }
+        st.textContent = "";
+        $("q-score").textContent = rep.score === null ? "—" : rep.score;
+        $("q-level").textContent = rep.level || "—";
+        $("q-level").style.color = (rep.level === "优秀") ? "#26de81"
+          : (rep.level === "良好") ? "#54a0ff"
+          : (rep.level === "一般") ? "#feca57" : "#ff4b4b";
+        $("q-cov").textContent = rep.coverage === undefined ? "—"
+          : Math.round(rep.coverage * 100) + "%";
+        $("q-period").textContent = rep.period || "—";
+
+        var FULL = {"盈利能力": 30, "成长性": 25, "财务健康": 25, "现金流质量": 20};
+        var tb = $("t-quality").querySelector("tbody");
+        tb.innerHTML = "";
+        var bd = rep.breakdown || {};
+        Object.keys(FULL).forEach(function(k){
+          var tr = document.createElement("tr");
+          var v = bd[k];
+          tr.innerHTML = "<td>" + k + "</td>" +
+            "<td class='num'>" + (v === null || v === undefined ? "—" : Number(v).toFixed(1)) + "</td>" +
+            "<td class='num'>" + FULL[k] + "</td>";
+          tb.appendChild(tr);
+        });
+
+        var notes = [];
+        if(rep.note) notes.push(rep.note);
+        if(rep.capped_by_coverage) notes.push("可算子项不足 3/4，评分已封顶 60");
+        if(rep.missing && rep.missing.length) notes.push("缺字段：" + rep.missing.join(","));
+        if(rep.warnings && rep.warnings.length) notes.push(rep.warnings.join("；"));
+        $("q-note").textContent = notes.join("   |   ");
+      })
+      .catch(function(e){ st.textContent = "请求失败：" + e.message; });
+  }
+
+  $("v-refresh").addEventListener("click", loadValuation);
+  $("o-refresh").addEventListener("click", loadOverseas);
+  $("q-run").addEventListener("click", runQuality);
+
+  /* ───────── 仓位管理器 ───────── */
+  function loadPosition(){
+    var st = $("p-status");
+    st.textContent = "计算中…（沪深300，约 1 秒）";
+    var q = "/api/position?window=" + ($("p-window").value || 20)
+          + "&band=" + (($("p-band").value || 0) / 100)
+          + "&confirm=" + ($("p-confirm").value || 1)
+          + "&cap_high=" + (($("p-high").value || 80) / 100)
+          + "&cap_low=" + (($("p-low").value || 30) / 100)
+          + "&days=20";
+    fetch(q)
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+      .then(function(res){
+        if(!res.ok){
+          st.textContent = "失败：" + (res.body.detail || "未知错误");
+          return;
+        }
+        var s = res.body.summary || {};
+        st.textContent = "";
+        $("p-state").textContent = s.current_state || "—";
+        $("p-state").style.color = s.current_state === "均线上方" ? "#26de81" : "#ff4b4b";
+        $("p-cap").textContent = (s.current_cap != null)
+          ? Math.round(s.current_cap * 100) + "%" : "—";
+        $("p-cap").style.color = (s.current_cap >= 0.7) ? "#26de81"
+          : (s.current_cap <= 0.35) ? "#ff4b4b" : "#feca57";
+        var rows = res.body.series || [];
+        var last = rows.length ? rows[rows.length - 1] : {};
+        $("p-close").textContent = last.close != null
+          ? Number(last.close).toLocaleString() : "—";
+        $("p-ma").textContent = last.ma != null
+          ? Number(last.ma).toLocaleString() : "—";
+        $("p-meta").textContent = "截至 " + (s.as_of || "—")
+          + " ｜ 偏离 " + (last.diff_pct != null ? last.diff_pct + "%" : "—")
+          + " ｜ 历史上限均值 " + (s.avg_cap != null ? Math.round(s.avg_cap * 100) + "%" : "—")
+          + " ｜ 状态切换 " + (s.switches != null ? s.switches : "—") + " 次"
+          + "（约每年 " + (s.switches_per_year != null ? s.switches_per_year : "—") + " 次）";
+
+        var tb = $("t-pos").querySelector("tbody");
+        tb.innerHTML = "";
+        rows.slice().reverse().forEach(function(r){
+          var tr = document.createElement("tr");
+          var cap = Math.round((r.cap || 0) * 100);
+          tr.innerHTML = "<td>" + r.date + "</td>" +
+            "<td class='num'>" + (r.close != null ? Number(r.close).toLocaleString() : "—") + "</td>" +
+            "<td class='num'>" + (r.ma != null ? Number(r.ma).toLocaleString() : "—") + "</td>" +
+            "<td class='num' style='color:" + ((r.diff_pct || 0) >= 0 ? "#26de81" : "#ff4b4b") + "'>" +
+              (r.diff_pct != null ? r.diff_pct + "%" : "—") + "</td>" +
+            "<td class='num'><b>" + cap + "%</b></td>" +
+            "<td>" + (r.above
+              ? "<span style='color:#26de81'>上方</span>"
+              : "<span style='color:#ff4b4b'>下方</span>") + "</td>";
+          tb.appendChild(tr);
+        });
+      })
+      .catch(function(e){ st.textContent = "请求失败：" + e.message; });
+  }
+
+  /* ───────── 启动 ───────── */
+  fetch("/api/health").then(function(r){ return r.json(); }).then(function(h){
+    if(h && h.ok){
+      var extra = h.llm_configured ? "（已检测到大模型 Key）" : "（未配置 Key，将使用本地模板）";
+      setStatus("后端已连接 " + h.version + " " + extra, "ok");
+    }
+  }).catch(function(){
+    setStatus("未连接到后端，请先运行 python backend/api_v2.py", "warn");
+  });
+
+  if(location.hash === "#daily") switchTab("daily");
+  else if(location.hash === "#risk") switchTab("risk");
+  else if(location.hash === "#portfolio") switchTab("portfolio");
+  else if(location.hash === "#code") switchTab("code");
+  else if(location.hash === "#market") switchTab("market");
+  else if(location.hash === "#pos") switchTab("pos");
+})();
+</script>
+</body>
+</html>

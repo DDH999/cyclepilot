@@ -1,0 +1,8 @@
+code,type,shares,cost
+# 你的真实持仓。type 列必填：fund=场外基金 / etf=场内ETF / stock=A股
+# 场外基金：shares=份额，cost=成本净值（投入金额 ÷ 份额）
+# 现金单独一行：code 写 CASH，type 留空，shares 填金额
+110022,fund,10000,2.80
+000001,fund,20000,1.10
+510300,etf,5000,3.90
+CASH,,50000,

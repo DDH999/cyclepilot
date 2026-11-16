@@ -1,0 +1,219 @@
+{
+  "date": "2026-11-07",
+  "generated_at": "2026-11-07T14:19:46",
+  "version": "0.1.0",
+  "watchlist": [
+    "600519",
+    "000001",
+    "601318",
+    "000333",
+    "600036",
+    "601857",
+    "000858",
+    "600276"
+  ],
+  "nav_days": 400,
+  "nav_latest": 112756.30193273778,
+  "report": {
+    "verdict": "PASS",
+    "grade": "B",
+    "score": 80.28,
+    "grade_capped": false,
+    "items": [
+      {
+        "name": "防作弊",
+        "status": "N/A",
+        "score": 0.0,
+        "value": null,
+        "reason": "data_unavailable",
+        "note": "未提供策略代码，无法进行未来函数扫描，本项豁免",
+        "detail": {
+          "dim": "anti_cheat"
+        }
+      },
+      {
+        "name": "抗过拟合",
+        "status": "PASS",
+        "score": 70.0,
+        "value": 0.0002248167702332957,
+        "reason": null,
+        "note": "",
+        "detail": {
+          "dim": "anti_overfit"
+        }
+      },
+      {
+        "name": "抗压能力",
+        "status": "PASS",
+        "score": 80.0,
+        "value": null,
+        "reason": null,
+        "note": "部分子项豁免：由于数据未覆盖该历史区间，此项压力测试豁免，但建议结合定性分析",
+        "detail": {
+          "dim": "stress"
+        }
+      },
+      {
+        "name": "策略纯度",
+        "status": "PASS",
+        "score": 94.56,
+        "value": 94.56,
+        "reason": null,
+        "note": "",
+        "detail": {
+          "dim": "purity"
+        }
+      },
+      {
+        "name": "成本可控",
+        "status": "PASS",
+        "score": 80.0,
+        "value": 0.026839980476291103,
+        "reason": null,
+        "note": "",
+        "detail": {
+          "dim": "cost"
+        }
+      },
+      {
+        "name": "稳健性",
+        "status": "N/A",
+        "score": 0.0,
+        "value": null,
+        "reason": "data_unavailable",
+        "note": "由于数据未覆盖该历史区间，此项压力测试豁免，但建议结合定性分析",
+        "detail": {
+          "dim": "stability"
+        }
+      }
+    ],
+    "notes": [
+      "[防作弊] 未提供策略代码，无法进行未来函数扫描，本项豁免",
+      "[抗压能力] 部分子项豁免：由于数据未覆盖该历史区间，此项压力测试豁免，但建议结合定性分析",
+      "[稳健性] 由于数据未覆盖该历史区间，此项压力测试豁免，但建议结合定性分析"
+    ],
+    "counts": {
+      "pass": 4,
+      "warn": 0,
+      "na": 2,
+      "fail": 0,
+      "reject": 0
+    },
+    "policy": "tiered_v1",
+    "summary": "通过：4 项达标，评级 B。",
+    "audit": [],
+    "override_applied": false,
+    "dimensions": [
+      {
+        "key": "anti_cheat",
+        "label": "防作弊",
+        "weight": 0.25,
+        "score": null,
+        "status": "N/A",
+        "reason": "data_unavailable",
+        "note": "未提供策略代码，无法进行未来函数扫描，本项豁免"
+      },
+      {
+        "key": "anti_overfit",
+        "label": "抗过拟合",
+        "weight": 0.2,
+        "score": 70.0,
+        "status": "PASS",
+        "reason": null,
+        "note": ""
+      },
+      {
+        "key": "stress",
+        "label": "抗压能力",
+        "weight": 0.2,
+        "score": 80.0,
+        "status": "PASS",
+        "reason": null,
+        "note": "部分子项豁免：由于数据未覆盖该历史区间，此项压力测试豁免，但建议结合定性分析"
+      },
+      {
+        "key": "purity",
+        "label": "策略纯度",
+        "weight": 0.15,
+        "score": 94.56,
+        "status": "PASS",
+        "reason": null,
+        "note": ""
+      },
+      {
+        "key": "cost",
+        "label": "成本可控",
+        "weight": 0.1,
+        "score": 80.0,
+        "status": "PASS",
+        "reason": null,
+        "note": ""
+      },
+      {
+        "key": "stability",
+        "label": "稳健性",
+        "weight": 0.1,
+        "score": null,
+        "status": "N/A",
+        "reason": "data_unavailable",
+        "note": "由于数据未覆盖该历史区间，此项压力测试豁免，但建议结合定性分析"
+      }
+    ],
+    "radar": {
+      "anti_cheat": null,
+      "anti_overfit": 70.0,
+      "stress": 80.0,
+      "purity": 94.56,
+      "cost": 80.0,
+      "stability": null
+    },
+    "score_breakdown": {
+      "weighted_score": 80.28,
+      "grade": "B",
+      "verdict": "PASS"
+    },
+    "version": "0.1.0",
+    "warnings": [
+      "未提供策略代码，防作弊维度无法评估",
+      "收益序列未覆盖 2024 微盘股危机区间，抗压项部分豁免"
+    ],
+    "inputs": {
+      "n_days": 399,
+      "start": "2025-03-18",
+      "end": "2026-11-06",
+      "has_code": false,
+      "has_weights": true,
+      "has_bench": false,
+      "is_split": "2023-01-01"
+    }
+  },
+  "diagnosis": {
+    "source": "template",
+    "degraded": true,
+    "fallback_reason": "llm_disabled",
+    "fallback_detail": "use_llm=False",
+    "model": null,
+    "prompt_version": "1.0",
+    "generated_at": "2026-11-07T06:19:46+00:00",
+    "latency_ms": 0.0,
+    "summary": "综合定性：该策略**中性偏好**——评级 B，整体可用但有改进空间。",
+    "fatal": "核心致命伤：**抗过拟合**得分 70 分，严重度中。样本外表现略弱于样本内，需持续观察其稳定性。",
+    "advice": "整改建议：抗过拟合（70 分）：减少参数搜索次数并记录全部尝试，改用 Purged Walk-Forward 切分；扩大样本外区间，同时报告 Deflated Sharpe 与参数敏感性。",
+    "issues": [
+      {
+        "dimension": "anti_overfit",
+        "label": "抗过拟合",
+        "score": 70.0,
+        "severity": "中",
+        "fix": "减少参数搜索次数并记录全部尝试，改用 Purged Walk-Forward 切分；扩大样本外区间，同时报告 Deflated Sharpe 与参数敏感性。"
+      }
+    ],
+    "engine_version": "0.1.0"
+  },
+  "warnings": [
+    "未提供策略代码，防作弊维度无法评估",
+    "收益序列未覆盖 2024 微盘股危机区间，抗压项部分豁免"
+  ],
+  "changes": [],
+  "elapsed_ms": 5364.5
+}

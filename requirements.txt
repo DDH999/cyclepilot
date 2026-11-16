@@ -1,0 +1,30 @@
+# QuantPilot 运行依赖（锁定版本，实测于 Python 3.14.3 / Windows 11）
+# 安装：python -m pip install -r requirements.txt
+#
+# 只列当前系统（体检平台 + 持仓 + 定投 + 风控）实际需要的包。
+# 老一代研究模块（factor_lab / pipeline / charts 等）额外需要
+# matplotlib / scikit-learn / openpyxl，不属于本部署范围。
+
+numpy==2.5.4
+pandas==2.3.3
+scipy==1.18.1
+fastapi==0.162.0
+uvicorn==0.54.0
+pydantic==2.14.1
+httpx==0.28.1
+akshare==1.20.2
+
+# 可选：独立第三方数据源（多一层降级 + 全市场估值 + 行业映射）
+zzshare==0.4.13
+baostock==0.9.4
+yfinance==1.7.0
+
+# 可选：美股数据（需自备 API Key，见 config/keys.local.json）
+roicai==0.2.0
+xfinlink==1.0.0
+schedule==1.2.2
+streamlit==1.66.1
+plotly==7.1.0
+efinance==0.5.9
+adata==2.9.5
+ccxt==4.5.90

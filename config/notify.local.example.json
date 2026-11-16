@@ -1,0 +1,6 @@
+{
+  "_comment": "填哪个启用哪个；留空自动跳过。也可用环境变量覆盖。",
+  "feishu": { "webhook": "https://open.feishu.cn/open-apis/bot/v2/hook/xxxx" },
+  "wechat": { "webhook": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxx" },
+  "wechat_personal": { "sendkey": "SCTxxxxxx" }
+}
